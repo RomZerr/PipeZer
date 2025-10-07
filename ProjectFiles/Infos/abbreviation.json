@@ -1,0 +1,8 @@
+{
+    "01_character": "chr",
+    "02_prop": "prp",
+    "03_item": "itm",
+    "04_enviro": "env",
+    "05_module": "mod",
+    "06_fx": "fx",
+}

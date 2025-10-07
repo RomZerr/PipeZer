@@ -1,0 +1,7 @@
+python("from importlib import reload");
+python("from sys import path");
+python("path.append('C:/Program Files/PipeZer')");
+python("from Packages.apps.maya_app.ui.dialogs import PublishDialog");
+python("reload(maya_main_window)");
+python("window = PublishDialog()");
+python("window.show()");

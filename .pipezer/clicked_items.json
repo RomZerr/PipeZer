@@ -1,0 +1,39 @@
+{
+    "radio_button": null,
+    "02_ressource": {
+        "tree_item": null,
+        "list_item_01": null,
+        "list_item_02": null,
+        "list_item_03": null
+    },
+    "03_preprod": {
+        "tree_item": null,
+        "list_item_01": null,
+        "list_item_02": null,
+        "list_item_03": null
+    },
+    "04_asset": {
+        "tree_item": null,
+        "list_item_01": null,
+        "list_item_02": null,
+        "list_item_03": null
+    },
+    "05_shot": {
+        "tree_item": null,
+        "list_item_01": null,
+        "list_item_02": null,
+        "list_item_03": null
+    },
+    "11_texture": {
+        "tree_item": null,
+        "list_item_01": null,
+        "list_item_02": null,
+        "list_item_03": null
+    },
+    "12_cache": {
+        "tree_item": null,
+        "list_item_01": null,
+        "list_item_02": null,
+        "list_item_03": null
+    }
+}

@@ -1,0 +1,10 @@
+python("from importlib import reload");
+python("from sys import path");
+python("import os");
+python("pipezer_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))))");
+python("if pipezer_path not in path: path.append(pipezer_path)");
+python("from Packages.apps.maya_app.ui import maya_main_window");
+python("from Packages.apps.maya_app.ui.maya_class import MayaPipeZer");
+python("reload(maya_main_window)");
+python("window = MayaPipeZer()");
+python("window.show()");

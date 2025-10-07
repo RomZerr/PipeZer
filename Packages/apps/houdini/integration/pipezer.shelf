@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shelfDocument>
+  <!-- This file contains definitions of shelves, toolbars, and tools.
+ It should not be hand-edited when it is being used by the application.
+ Note, that two definitions of the same element are not allowed in
+ a single file. -->
+
+  <toolshelf name="pipezer" label="PipeZer">
+    <memberTool name="pipezer"/>
+    <memberTool name="screenshot"/>
+    <memberTool name="increment"/>
+  </toolshelf>
+
+  <tool name="pipezer" label="PipeZer" icon="C:/Program Files/PipeZer/ProjectFiles/Icons/pipezer_icon.png">
+    <script scriptType="python"><![CDATA[from sys import path
+path.append('C:/Program Files/PipeZer')
+from Packages.apps.houdini.ui.houdini_class import HoudiniPipeZer
+HoudiniPipeZer()]]></script>
+  </tool>
+
+  <tool name="screenshot" label="Screenshot" icon="C:/Program Files/PipeZer/ProjectFiles/Icons/thumbnail_icon.png">
+    <script scriptType="python"><![CDATA[from sys import path
+path.append('C:/Program Files/PipeZer')
+from Packages.apps.houdini.funcs.save_thumbnail import save_thumbnail
+save_thumbnail()]]></script>
+  </tool>
+
+  <tool name="increment" label="Increment" icon="C:/Program Files/PipeZer/ProjectFiles/Icons/save_as.png">
+    <script scriptType="python"><![CDATA[from sys import path
+path.append('C:/Program Files/PipeZer')
+from Packages.apps.houdini.ui.dialogs import EditDialog
+EditDialog()]]></script>
+  </tool>
+
+  <shelfSetEdit name="shelf_set_1" fileLocation="C:/PROGRA~1/SIDEEF~1/HOUDIN~1.640/houdini/toolbar/ShelfDefinitions.shelf">
+    <addMemberToolshelf name="pipezer" inPosition="15"/>
+  </shelfSetEdit>
+</shelfDocument>

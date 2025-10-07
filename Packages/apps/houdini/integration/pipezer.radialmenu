@@ -1,0 +1,28 @@
+{
+	"fileversion":"19.5.640",
+	"name":"pipezer",
+	"categories":"Standard",
+	"pane":"scene",
+	"label":"pipezer",
+	"type":"submenu",
+	"items":{
+		"0":{
+			"label":"Increment",
+			"type":"script_action",
+			"icon":"C:/Program Files/PipeZer/ProjectFiles/Icons/save_as.png",
+			"script":"radialmenu.runShelfTool(kwargs, 'increment_edit')"
+		},
+		"1":{
+			"label":"PipeZer",
+			"type":"script_action",
+			"icon":"C:/Program Files/PipeZer/ProjectFiles/Icons/pipezer.png",
+			"script":"radialmenu.runShelfTool(kwargs, 'pipezer')"
+		},
+		"7":{
+			"label":"Screenshot",
+			"type":"script_action",
+			"icon":"C:/Program Files/PipeZer/ProjectFiles/Icons/thumbnail_icon.png",
+			"script":"radialmenu.runShelfTool(kwargs, 'screenshot')"
+		}
+	}
+}
