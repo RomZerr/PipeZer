@@ -1,0 +1,100 @@
+{
+  "app": {
+    "title": "PipeZer",
+    "loading": "Chargement en cours...",
+    "initialization": "Initialisation en cours...",
+    "ready": "Prêt !"
+  },
+  "preferences": {
+    "title": "Configuration PipeZer",
+    "welcome": "Bienvenue dans PipeZer",
+    "subtitle": "Configurez votre environnement de travail",
+    "step": "Étape {current} sur {total}",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "finish": "Terminer",
+    "cancel": "Annuler",
+    "reset": "Réinitialiser"
+  },
+  "language": {
+    "title": "Sélection de la langue",
+    "description": "Choisissez votre langue préférée",
+    "select": "Sélectionner la langue"
+  },
+  "username": {
+    "title": "Nom d'utilisateur",
+    "description": "Entrez votre nom d'utilisateur",
+    "placeholder": "Votre nom d'utilisateur",
+    "required": "Le nom d'utilisateur est requis"
+  },
+  "theme": {
+    "title": "Thème de l'interface",
+    "description": "Choisissez la couleur de votre interface",
+    "dark": "Sombre",
+    "light": "Clair",
+    "blue": "Bleu",
+    "green": "Vert",
+    "purple": "Violet"
+  },
+  "project": {
+    "title": "Sélection du projet",
+    "description": "Sélectionnez le dossier de votre projet PipeZer",
+    "select": "Sélectionner le dossier du projet",
+    "none_selected": "Aucun projet sélectionné",
+    "required": "La sélection d'un projet est requise"
+  },
+  "pipeline": {
+    "title": "Configuration du pipeline",
+    "description": "Voulez-vous configurer la structure de votre pipeline ?",
+    "create_new": "Créer de nouveaux dossiers",
+    "use_existing": "Utiliser les dossiers existants",
+    "skip": "Passer cette étape",
+    "new_description": "Créer la structure de dossiers par défaut (04_asset, 05_shot, 02_ressource)",
+    "existing_description": "Mapper les dossiers déjà présents dans votre projet"
+  },
+  "tabs": {
+    "browser": "Navigateur",
+    "recent": "Récent",
+    "search_file": "Rechercher",
+    "settings": "Paramètres",
+    "refresh": "Actualiser"
+  },
+  "buttons": {
+    "create_asset": "Créer Asset",
+    "create_shot": "Créer Shot",
+    "construct_pipeline": "Construire Pipeline",
+    "create_default_folders": "Créer dossiers par défaut",
+    "map_existing_folders": "Mapper dossiers existants",
+    "ok": "OK",
+    "cancel": "Annuler",
+    "apply": "Appliquer",
+    "continue": "Continuer"
+  },
+  "dialogs": {
+    "construct_pipeline": {
+      "title": "Construire Pipeline",
+      "project": "Projet: {project}",
+      "unset": "<non défini>"
+    },
+    "user_edit": {
+      "title": "Modifier le nom d'utilisateur",
+      "new_username": "Nouveau nom d'utilisateur:"
+    }
+  },
+  "tabs": {
+    "template": "Template",
+    "asset": "Asset",
+    "shot": "Shot",
+    "local_ldv": "Local LDV",
+    "local_compo": "Local COMP",
+    "crash": "Crash"
+  },
+  "messages": {
+    "done": "Terminé",
+    "default_pipeline_folders_created": "Dossiers de pipeline par défaut créés.",
+    "folders_mapped_created": "Dossiers mappés/créés.",
+    "error_saving_username": "Erreur lors de la sauvegarde du nom d'utilisateur : {error}",
+    "permissions_updated": "Les permissions pour {path} ont été mises à jour.",
+    "error_permissions": "Erreur lors de la modification des permissions : {error}"
+  }
+}

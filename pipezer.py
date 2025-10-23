@@ -11,9 +11,11 @@ def set_permissions_for_pipezer_folder():
             for file in files:
                 file_path = os.path.join(root, file)
                 os.chmod(file_path, stat.S_IRWXU)  # Fichiers
-        print(f"Les permissions pour {folder_path} ont été mises à jour.")
+        from Packages.utils.translation import translation_manager
+        print(translation_manager.get_text("messages.permissions_updated", path=folder_path))
     except Exception as e:
-        print(f"Erreur lors de la modification des permissions : {e}")
+        from Packages.utils.translation import translation_manager
+        print(translation_manager.get_text("messages.error_permissions", error=str(e)))
 
 set_permissions_for_pipezer_folder()
 

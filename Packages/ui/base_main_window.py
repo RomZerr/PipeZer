@@ -98,69 +98,59 @@ class BaseMainWindow(CustomMainWindow):
         self._radio_layout.addWidget(self.user_button)
         self._radio_layout.addWidget(self.notification_button)
         
-        self.user_button.clicked.connect(self._edit_username)
+        # self.user_button.clicked.connect(self._edit_username)
 
     def _edit_username(self):
-        """
-        Ouvre un dialog pour modifier le nom d'utilisateur.
-        """
-        from PySide2.QtWidgets import QInputDialog
+        """Opens dialog to modify username"""
+        from Packages.ui.dialogs.user_dialog import UserDialog
+        from Packages.utils.translation import translation_manager
         
         current_username = get_username()
-        new_username, ok = QInputDialog.getText(
-            self, 
-            'Modifier le nom d\'utilisateur', 
-            'Nouveau nom d\'utilisateur:', 
-            text=current_username
-        )
+        dialog = UserDialog(self)
+        dialog.setWindowTitle(translation_manager.get_text("dialogs.user_edit.title"))
+        dialog.label.setText(translation_manager.get_text("dialogs.user_edit.new_username"))
+        dialog.username_edit.setText(current_username)
         
-        if ok and new_username.strip():
-            # Sauvegarder le nouveau nom d'utilisateur
-            self._save_username(new_username.strip())
-            # Mettre à jour le bouton
-            self.user_button.setText(f"👤 {new_username.strip()}")
-            self.user_button.setToolTip(f"Utilisateur: {new_username.strip()}")
+        if dialog.exec_() == QDialog.Accepted:
+            new_username = dialog.get_username()
+            if new_username.strip():
+                self._save_username(new_username.strip())
+                self.user_button.setText(f"👤 {new_username.strip()}")
+                self.user_button.setToolTip(f"User: {new_username.strip()}")
 
     def _save_username(self, username):
-        """
-        Sauvegarde le nom d'utilisateur dans le fichier user.json.
-        """
+        """Saves username to user.json file"""
         import os
         import json
         
         user_home_dir = os.path.expanduser("~")
         pipezer_dir = os.path.join(user_home_dir, '.pipezer')
         
-        # Créer le dossier .pipezer s'il n'existe pas
         if not os.path.exists(pipezer_dir):
             os.makedirs(pipezer_dir)
         
         user_file_path = os.path.join(pipezer_dir, 'user.json')
         
         try:
-            # Charger les données existantes ou créer un nouveau dict
             if os.path.exists(user_file_path):
                 with open(user_file_path, 'r') as user_file:
                     data = json.load(user_file)
             else:
                 data = {}
             
-            # Mettre à jour le nom d'utilisateur
             data["username"] = username
             
-            # Sauvegarder
             with open(user_file_path, 'w') as user_file:
                 json.dump(data, user_file, indent=2)
                 
         except Exception as e:
-            print(f"Erreur lors de la sauvegarde du nom d'utilisateur : {e}")
+            from Packages.utils.translation import translation_manager
+            print(translation_manager.get_text("messages.error_saving_username", error=str(e)))
 
     def create_widgets(self):
 
-        # Initialisation du QTabWidget pour gérer les onglets
         self._tab_widget = QTabWidget(self)
         self._tab_widget.setObjectName("main_tab_widget")
-        # Supprimer le background gris du QTabWidget
         self._tab_widget.setStyleSheet("QTabWidget#main_tab_widget { background-color: transparent; }")
 
         # BROWSER TAB --------------------------------------------------------------------------------------
@@ -174,30 +164,7 @@ class BaseMainWindow(CustomMainWindow):
             self.button_group.addButton(checkable_button)
             return checkable_button
 
-        self._templates_radio_button: QPushButton = create_checkable_button('Template')
-        self._asset_radio_button: QPushButton = create_checkable_button("Asset")
-        self._shot_radio_button: QPushButton = create_checkable_button('Shot')
-        self._localLDV_radio_button: QPushButton = create_checkable_button('Local LDV')
-        self._localCOMPO_radio_button: QPushButton = create_checkable_button('Local COMP')
-        self._crash_radio_button: QPushButton = create_checkable_button('Crash')
-
-        # Associer les répertoires aux boutons
-        self._asset_radio_button.setProperty('directory', '04_asset')
-        self._shot_radio_button.setProperty('directory', '05_shot')
-        self._templates_radio_button.setProperty('directory', '02_ressource/template_scenes')
-        self._localLDV_radio_button.setProperty('directory', 'D:/_PROD/LOOKDEV/04_asset')
-        self._localCOMPO_radio_button.setProperty('directory', 'D:/_PROD/COMPO')
-        self._crash_radio_button.setProperty('directory', 'C:/Users/3D4/AppData/Local/Temp/')
-
-        # Liste de tous les boutons checkables
-        self.checkable_buttons = (
-            self._asset_radio_button,
-            self._shot_radio_button,
-            self._templates_radio_button,
-            self._localLDV_radio_button,
-            self._localCOMPO_radio_button,
-            self._crash_radio_button,
-        )
+        from Packages.utils.translation import translation_manager       
 
         self.search_bar = QLineEdit()
         self.search_bar.setPlaceholderText("")
@@ -213,21 +180,17 @@ class BaseMainWindow(CustomMainWindow):
         self.list_02.create_context_menu()
         self.list_03.create_context_menu()
 
-        # Configuration du tableau pour "Browser"
         self.browser_file_table = CustomTableWidget()
         self.browser_file_table.set_table(['File Name', 'Image', 'Version', 'Comment', 'Infos'],
                                           [180, 100, 100, 150, 100])
 
-        # Configuration de la mise en page du tableau
         self._browser_file_layout = QVBoxLayout()
         self._browser_file_layout.addWidget(self.browser_file_table)
 
-        # Configuration du tableau pour "Recent"
         self.recent_file_table = CustomTableWidget()
         self.recent_file_table.set_table(['File Name', 'Image', 'Version', 'Comment', 'Infos'],
                                          [180, 100, 100, 150, 100])
 
-        # Configuration du tableau pour "Search File"
         self.search_file_table = CustomTableWidget()
         self.search_file_table.set_table(['File Name', 'Image', 'Version', 'Comment', 'Infos'], True)
 
@@ -240,10 +203,7 @@ class BaseMainWindow(CustomMainWindow):
         """
         """
 
-        # Créer un QTabWidget
         self._tab_widget = QTabWidget()
-
-        # Créer les 2 onglets
         self.browser_tab = QWidget()
         self.browser_tab.setObjectName("browser_tab")
         self.recent_tab = QWidget()
@@ -298,7 +258,6 @@ class BaseMainWindow(CustomMainWindow):
             self._radio_layout.addWidget(radio_btn)
         self._radio_layout.addStretch(1)
         
-        # Ajouter les boutons utilisateur et notification à droite
         self._create_user_notification_buttons()
         self._left_splitter.addWidget(self.tree_browser)
         self._left_splitter.addWidget(self.tool_layout_widget)
@@ -352,17 +311,14 @@ class BaseMainWindow(CustomMainWindow):
 
         self.search_button.clicked.connect(self.filter_files)
 
-        # Connecter l'événement de la barre de recherche à la méthode de recherche
         self.search_bar.returnPressed.connect(self.filter_files)
         search_layout = QHBoxLayout()
         search_layout.addWidget(self.search_bar)
         search_layout.addWidget(self.search_button)
 
-        # Configuration de la mise en page avec la barre de recherche au-dessus du tableau
         self._search_file_layout = QVBoxLayout(self.search_file_tab)
-        self._search_file_layout.addLayout(
-            search_layout)  # Ajoute le layout de recherche horizontal au-dessus du tableau
-        self._search_file_layout.addWidget(self.search_file_table)  # Ajoute le tableau en dessous
+        self._search_file_layout.addLayout(search_layout)
+        self._search_file_layout.addWidget(self.search_file_table)
 
     def filter_files(self):
         print("Début de la méthode filter_files")
@@ -370,19 +326,16 @@ class BaseMainWindow(CustomMainWindow):
         search_text = self.search_bar.text().lower()
         project_folder = CURRENT_PROJECT
 
-        # Effacer les anciennes données du tableau
         print("Effacement du tableau")
         self.search_file_table.setRowCount(0)
 
-        matching_files = []  # Stocker les fichiers correspondants
-        max_displayed_results = 100  # Limite le nombre de résultats affichés
+        matching_files = []
+        max_displayed_results = 100
 
-        # Parcourir les fichiers dans le dossier du projet
         for root, dirs, files in os.walk(project_folder):
-            # Ignorer le dossier "02_ressource"
             if '02_ressource' in root:
                 print(f"Dossier ignoré : {root}")
-                continue  # Passer à l'itération suivante pour ignorer ce dossier
+                continue
 
             print(f"Exploration du dossier : {root}")
             for file in files:
@@ -390,22 +343,18 @@ class BaseMainWindow(CustomMainWindow):
                     file_path = os.path.join(root, file)
                     matching_files.append(file_path)
 
-                    # Vérifie si la limite de résultats a été atteinte
                     if len(matching_files) >= max_displayed_results:
                         print(f"Limite de {max_displayed_results} résultats atteinte")
                         break
             if len(matching_files) >= max_displayed_results:
                 break
 
-        # Désactiver les mises à jour du tableau pour éviter les ralentissements
         self.search_file_table.setUpdatesEnabled(False)
 
-        # Ajout des résultats au tableau
         for file_path in matching_files:
             print(f"Ajout du fichier au tableau : {file_path}")
             self.search_file_table.add_item(file_path)
 
-        # Réactiver les mises à jour du tableau
         self.search_file_table.setUpdatesEnabled(True)
 
         print("Fin de la méthode filter_files")
@@ -439,7 +388,6 @@ class BaseMainWindow(CustomMainWindow):
         self.list_04.itemClicked.connect(self.on_list_item_clicked)
 
     def create_context_menu(self):
-        # Définir menu contextuel pour Comment
         self.context_menu = QMenu(self)
         
         self.edit_comment_action = QAction("Edit comment", self)
@@ -467,7 +415,6 @@ class BaseMainWindow(CustomMainWindow):
         self.search_file_table.customContextMenuRequested.connect(self.show_context_menu_recent)
 
     def filter_items(self):
-        # Filtrer les items du QTreeWidget en fonction du texte entré dans la barre de recherche
         filter_text = self.search_bar.text().lower()
         self.tree_browser.clearSelection()
         self.filter_items_recursive(self.tree_browser.invisibleRootItem(), filter_text)
@@ -492,7 +439,7 @@ class BaseMainWindow(CustomMainWindow):
             parent_item = parent_item.parent()
 
     def start_search_timer(self):
-        self.search_timer.start(300)  # Délai de 300 ms avant de lancer la recherche
+        self.search_timer.start(300)
 
     # AUTO-CLIC
     def auto_clic(self):
@@ -550,40 +497,33 @@ class BaseMainWindow(CustomMainWindow):
     
     def _click_tree_item_by_text(self, tree_widget: CustomTreeWidget, text_to_find: str, parent_item: QTreeWidgetItem = None):
         if parent_item is None:
-            # Si parent_item n'est pas spécifié, commencez la recherche depuis les éléments de niveau supérieur
             root_items = [tree_widget.topLevelItem(i) for i in range(tree_widget.topLevelItemCount())]
         else:
-            # Sinon, commencez la recherche depuis les enfants de parent_item
             root_items = [parent_item]
         
-        # Parcourez les éléments
         for item in root_items:
-            if item.text(0) == text_to_find:  # Supposons que la colonne 0 contient le texte
-                # Cliquez sur l'élément trouvé
+            if item.text(0) == text_to_find:
                 tree_widget.setCurrentItem(item)
                 return True
-            
-            # Parcourez les enfants récursivement
             for column in range(item.columnCount()):
                 for child_index in range(item.childCount()):
                     child_item = item.child(child_index)
                     if self._click_tree_item_by_text(tree_widget, text_to_find, child_item):
                         return child_item, column
         
-        # Si l'élément n'a pas été trouvé, renvoie False
         return False
     
     def on_radio_button_clicked(self):
         
         def find_top_level_item_by_text(tree_widget: CustomTreeWidget, texte: str) -> QTreeWidgetItem:
-            """ Trouve et retourne l'élément QTreeWidgetItem top level ayant le texte donné. """
-            items = tree_widget.findItems(texte, Qt.MatchExactly, 0)  # Recherche par texte exact dans la colonne 0
+            """Finds and returns top level QTreeWidgetItem with given text"""
+            items = tree_widget.findItems(texte, Qt.MatchExactly, 0)
             
             for item in items:
-                if not item.parent():  # Vérifie si l'élément n'a pas de parent (top level)
+                if not item.parent():
                     return item
             
-            return None  # Retourne None si aucun élément correspondant n'est trouvé
+            return None
 
         self._add_base_folder_to_dir()
         self._fill_tree_items()
@@ -620,7 +560,6 @@ class BaseMainWindow(CustomMainWindow):
         
     def on_list_item_clicked(self, item):
 
-        # Gérer le clic sur un élément de la liste et éviter les erreurs NoneType
         if item is None:
             logger.warning("No item selected. Cannot update data.")
             return
@@ -657,10 +596,9 @@ class BaseMainWindow(CustomMainWindow):
     def _open_file(self, item):
 
         if item:
-            file_path = item.data(32)  # Récupérer le chemin du fichier stocké dans l'item
+            file_path = item.data(32)
             if file_path:
-                # Ouvre le fichier avec le bouton Maya par exemple
-                self.open_file_widget.open_maya_file()  # Appeler la méthode de l'OpenFileWidget
+                self.open_file_widget.open_maya_file()
             else:
                 print("No file path available for the selected item.")
         else:
@@ -768,9 +706,9 @@ class BaseMainWindow(CustomMainWindow):
                 
     # UPDATE CURRENT DIRECTORY
     def _add_base_folder_to_dir(self):
-        self.current_directory = self.PROJECT_PATH # je remets le DIR à la racine 
+        self.current_directory = self.PROJECT_PATH
         self.current_directory = os.path.join(self.PROJECT_PATH, self._get_active_radio())
-        self.status_bar.update(self.current_directory) # j'ajoute le dir 
+        self.status_bar.update(self.current_directory) 
                  
     def _add_tree_item_to_current_dir(self, item, column):
         
@@ -825,7 +763,6 @@ class BaseMainWindow(CustomMainWindow):
 
             update_file_data(file_path, entered_text)
 
-            # Vérifier quel onglet est actif et mettre à jour le commentaire
             active_tab = self._get_active_tab_text()
             if active_tab == 'Browser':
                 selected_items = self.browser_file_table.selectedItems()
@@ -836,13 +773,12 @@ class BaseMainWindow(CustomMainWindow):
             elif active_tab == 'Search File':
                 selected_items = self.search_file_table.selectedItems()
                 table = self.search_file_table
-            else:  # Assume 'Recent'
+            else:
                 selected_items = self.recent_file_table.selectedItems()
                 table = self.recent_file_table
 
-            # Mise à jour du commentaire dans la bonne colonne
-            if len(selected_items) > 3:  # S'assurer qu'il y a suffisamment d'éléments sélectionnés
-                comment_item = selected_items[2]  # Utiliser l'indice correct pour la colonne "Comment"
+            if len(selected_items) > 3:
+                comment_item = selected_items[2]
                 comment_item.setText(get_file_data(file_path)['comment'])
                 logger.info(f"Comment updated for file: {file_path}")
             else:
@@ -1014,24 +950,21 @@ class BaseMainWindow(CustomMainWindow):
                 parent_widget.setItemSelected(item, True)
                 self._add_dir(item)
                 dico[parent_widget](item)
-                self.on_list_item_clicked(item) ########### attention à vérifier !!
+                self.on_list_item_clicked(item)
                 break
 
     def update_sequences(self):
         """
         Met à jour la liste des séquences pour le personnage sélectionné.
         """
-        # Réinitialiser la liste des séquences
         self.sequence_list_widget.clear()
 
-        # Vérifie que le personnage est bien sélectionné
         if self.character_list_widget.currentItem() is None:
             print("No character selected. Cannot filter sequences.")
             return
 
         character_name = self.character_list_widget.currentItem().text()
 
-        # Récupérer toutes les séquences disponibles pour ce personnage
         sequences = self.get_sequences_for_character(character_name)
         if sequences:
             self.sequence_list_widget.addItems(sequences)
@@ -1042,24 +975,20 @@ class BaseMainWindow(CustomMainWindow):
         """
         Met à jour la liste des shots pour la séquence sélectionnée.
         """
-        # Réinitialiser la liste des shots
         self.shot_list_widget.clear()
 
-        # Vérifie que la séquence est bien sélectionnée
         if self.sequence_list_widget.currentItem() is None:
             print("No sequence selected. Cannot filter shots.")
             return
 
         sequence_name = self.sequence_list_widget.currentItem().text()
 
-        # Vérifie que le personnage est bien sélectionné
         if self.character_list_widget.currentItem() is None:
             print("No character selected. Cannot filter shots.")
             return
 
         character_name = self.character_list_widget.currentItem().text()
 
-        # Récupérer tous les shots disponibles pour ce personnage et cette séquence
         shots = self.get_shots_for_sequence(sequence_name, character_name)
         if shots:
             self.shot_list_widget.addItems(shots)
@@ -1070,46 +999,36 @@ class BaseMainWindow(CustomMainWindow):
         """
         Met à jour la liste des fichiers pour le personnage, la séquence ou le shot sélectionné dans l'onglet "Sequence Filter".
         """
-        # Réinitialiser le tableau des fichiers
         self.filtered_file_table.setRowCount(0)
-
-        # Vérifie que le personnage est bien sélectionné
         if self.character_list_widget.currentItem() is None:
             print("No character selected. Cannot filter files.")
             return
 
-        character_name = self.character_list_widget.currentItem().text()  # Récupère le nom du personnage sélectionné
+        character_name = self.character_list_widget.currentItem().text()
 
-        # Si seulement un personnage est sélectionné (pas de séquence ni de shot)
         if self.sequence_list_widget.currentItem() is None and self.shot_list_widget.currentItem() is None:
             files = self.get_files_for_character(character_name)
 
-        # Si une séquence est sélectionnée mais aucun shot n'est sélectionné
         elif self.sequence_list_widget.currentItem() is not None and self.shot_list_widget.currentItem() is None:
-            sequence_name = self.sequence_list_widget.currentItem().text()  # Nom de la séquence
+            sequence_name = self.sequence_list_widget.currentItem().text()
             files = self.get_files_for_sequence(sequence_name, character_name)
 
-        # Si un shot est sélectionné
         elif self.shot_list_widget.currentItem() is not None:
             shot_name = self.shot_list_widget.currentItem().text()
             files = self.get_files_for_shot(shot_name, character_name)
 
-        # Si aucun personnage n'est sélectionné, mais une séquence l'est
         elif self.character_list_widget.currentItem() is None and self.sequence_list_widget.currentItem() is not None:
             sequence_name = self.sequence_list_widget.currentItem().text()
             files = self.get_files_for_all_characters_in_sequence(sequence_name)
 
-        # Aucun fichier trouvé ou pas de sélection valide
         else:
             print("Invalid selection or no files found.")
             return
 
-        # Vérifie s'il y a des fichiers correspondants
         if not files:
             print("No files found for the selected character and filters.")
-            return  # Ne rien faire s'il n'y a pas de fichiers correspondants
+            return
 
-        # Ajouter les fichiers trouvés au tableau
         for file in files:
             self.filtered_file_table.add_item(file)
 
@@ -1136,7 +1055,6 @@ class BaseMainWindow(CustomMainWindow):
 
         for root, dirs, files_list in os.walk(shot_directory):
             for file in files_list:
-                # Vérifie que le fichier correspond au personnage
                 if character_name in file:
                     file_path = os.path.join(root, file)
                     files.append(file_path)
@@ -1149,11 +1067,10 @@ class BaseMainWindow(CustomMainWindow):
         """
         files = []
         sequence_directory = os.path.join(self.PROJECT_PATH, '05_shot',
-                                          sequence_name)  # Chemin du répertoire de la séquence
+                                          sequence_name)
 
         for root, dirs, files_list in os.walk(sequence_directory):
             for file in files_list:
-                # Vérifie que le fichier correspond au personnage
                 if character_name in file:
                     file_path = os.path.join(root, file)
                     files.append(file_path)
@@ -1169,9 +1086,7 @@ class BaseMainWindow(CustomMainWindow):
 
         for root, dirs, files_list in os.walk(shot_directory):
             for file in files_list:
-                # Vérifie que le fichier correspond au personnage
                 if character_name in file:
-                    # Extraire le nom de la séquence à partir du chemin
                     match = re.search(r'(seq\d+)', root)
                     if match:
                         sequences.add(match.group(1))
@@ -1187,9 +1102,7 @@ class BaseMainWindow(CustomMainWindow):
 
         for root, dirs, files_list in os.walk(sequence_directory):
             for file in files_list:
-                # Vérifie que le fichier correspond au personnage
                 if character_name in file:
-                    # Extraire le nom du shot à partir du chemin
                     match = re.search(r'(sh\d+)', root)
                     if match:
                         shots.add(match.group(1))
@@ -1203,14 +1116,13 @@ class BaseMainWindow(CustomMainWindow):
         files = []
         shot_directory = os.path.join(self.PROJECT_PATH, '05_shot')
 
-        # Lire les données du fichier file_data.json
         file_data_path = os.path.join(self.PROJECT_PATH, '.pipezer_data', 'file_data.json')
 
-        file_data = {}  # Par défaut, utiliser un dictionnaire vide
+        file_data = {}
         if os.path.exists(file_data_path):
             try:
                 with open(file_data_path, 'r') as file:
-                    file_data = json.load(file)  # Charge les données JSON
+                    file_data = json.load(file)
             except json.JSONDecodeError as e:
                 print(f"Erreur lors de la lecture du fichier JSON: {e}")
         else:
@@ -1221,39 +1133,27 @@ class BaseMainWindow(CustomMainWindow):
                 continue  # Skip directories that do not match the shot
 
             for file in files_list:
-                # Vérifie que le fichier correspond à la fois au shot et au personnage
                 if shot_name in file and character_name in file:
                     file_path = os.path.join(root, file)
 
-                    # Vérifie si des informations supplémentaires sont nécessaires dans file_data.json
                     if file_data.get(file_path):
                         print(f"File data found for {file_path}: {file_data[file_path]}")
-                        # Logique supplémentaire si nécessaire...
 
                     files.append(file_path)
 
         return files
 
-import os
-import shutil
-from PySide2.QtWidgets import QDialog, QVBoxLayout, QRadioButton, QPushButton, QLabel, QLineEdit, QCheckBox, QGridLayout
-import json
-import os
-
-from Packages.utils.constants.project_pipezer_data import CURRENT_PROJECT
-NOTIF_FILE_PATH = os.path.join(CURRENT_PROJECT, '.pipezer_data', 'notifs.json')
 from datetime import datetime
 
+NOTIF_FILE_PATH = os.path.join(CURRENT_PROJECT, '.pipezer_data', 'notifs.json')
+
 def add_notification(username, action, file_name):
-    """
-    Ajoute une notification dans le fichier JSON.
-    """
+    """Adds a notification to the JSON file"""
     notification = {
         "username": username,
         "action": action,
         "file": file_name,
-        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Formatage de la date et heure
-
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     try:
@@ -1270,15 +1170,13 @@ def add_notification(username, action, file_name):
         with open(NOTIF_FILE_PATH, 'w') as notif_file:
             json.dump(data, notif_file, indent=4)
 
-        print(f"Notification ajoutée : {notification}")
+        print(f"Notification added: {notification}")
 
     except Exception as e:
-        print(f"Erreur lors de l'ajout d'une notification : {e}")
+        print(f"Error adding notification: {e}")
 
 def get_username():
-    """
-    Récupère le nom d'utilisateur depuis user.json ou utilise le nom par défaut.
-    """
+    """Gets username from user.json or returns default"""
     user_home_dir = os.path.expanduser("~")
     pipezer_dir = os.path.join(user_home_dir, '.pipezer')
     user_file_path = os.path.join(pipezer_dir, 'user.json')
@@ -1433,18 +1331,13 @@ class CreateAssetDialogStandalone(QDialog):
     def get_subfolders(self) -> list:
         return [sub_cb.text().lower() for sub_cb in self.subfolders_list if sub_cb.isChecked()]
 
-    import shutil  # Import nécessaire pour la copie de fichiers
-
-    import shutil  # Import pour la copie de fichiers
+    import shutil
 
     def create_asset(self):
-        # Code existant pour récupérer les informations d'asset
         asset_name = self.get_asset_name()
         asset_type = self.get_asset_type()
         departments = self.get_departments()
         subfolders = self.get_subfolders()
-
-        # Vérifications de validation (inchangées)
         if not asset_name:
             QMessageBox.warning(self, 'Error', 'Please enter asset name.')
             return
@@ -1461,7 +1354,6 @@ class CreateAssetDialogStandalone(QDialog):
             QMessageBox.warning(self, 'Error', 'Please select subfolders.')
             return
 
-        # Création des dossiers requis
         asset_type_directory = os.path.join(ASSET_DIR, asset_type)
         asset_directory = os.path.join(asset_type_directory, asset_name)
 
@@ -1472,8 +1364,6 @@ class CreateAssetDialogStandalone(QDialog):
 
         for directory in [maya_directory, houdini_directory, texture_directory, substance_directory]:
             os.makedirs(directory, exist_ok=True)
-
-        # Création des sous-dossiers
         for subfolder in subfolders:
             subfolder_path = os.path.join(maya_directory, subfolder)
             os.makedirs(subfolder_path, exist_ok=True)
@@ -1485,7 +1375,6 @@ class CreateAssetDialogStandalone(QDialog):
                     else:
                         os.makedirs(os.path.join(subfolder_path, department), exist_ok=True)
 
-        # Dictionnaire de conversion de l'asset_type en préfixe
         asset_type_dict = {
             '01_character': 'chr',
             '02_prop': 'prp',
@@ -1494,10 +1383,7 @@ class CreateAssetDialogStandalone(QDialog):
             '05_module': 'mod'
         }
 
-        # Conversion du nom de type
         asset_type_prefix = asset_type_dict.get(asset_type, "unknown")
-
-        # Gestion de la copie du fichier LookDev dans le dossier "ldv"
         if 'ldv' in departments:
             template_path_houdini = r"\\Storage01\3D4\nordicPhone\02_ressource\Template_scenes\Houdini\NOR_ldv_template.hipnc"
             target_filename_houdini = f"NOR_{asset_type_prefix}_{asset_name}_ldv_E_001.hipnc"
@@ -1523,7 +1409,6 @@ class CreateAssetDialogStandalone(QDialog):
         except IOError as e:
             QMessageBox.critical(self, "Erreur de copie", f"Erreur lors de la copie du fichier Maya (geo) : {e}")
 
-        # Gestion de la copie du fichier Maya dans le dossier "rig" si la case rig est cochée
         if 'rig' in departments:
             rig_directory = os.path.join(maya_directory, 'scenes', 'rig')
             os.makedirs(rig_directory, exist_ok=True)
@@ -1537,18 +1422,16 @@ class CreateAssetDialogStandalone(QDialog):
             except IOError as e:
                 QMessageBox.critical(self, "Erreur de copie", f"Erreur lors de la copie du fichier Maya (rig) : {e}")
 
-        # Ajouter une notification
         username = get_username()
         add_notification(username, "create_asset", asset_name)
 
-        # Fermer la fenêtre après la création de l'asset
         QMessageBox.information(self, "Succès", f"L'Asset '{asset_name}' a été créé avec succès.")
         self.close()
 
 from PySide2.QtCore import QThread, Signal
 
 class FileSearchThread(QThread):
-    files_found = Signal(list)  # Signal émis lorsqu'un fichier est trouvé
+    files_found = Signal(list)
 
     def __init__(self, search_text, project_folder, max_results=100):
         super().__init__()
@@ -1564,7 +1447,6 @@ class FileSearchThread(QThread):
                     file_path = os.path.join(root, file)
                     matching_files.append(file_path)
 
-                    # Émettre les résultats trouvés au fur et à mesure
                     if len(matching_files) % 10 == 0:
                         self.files_found.emit(matching_files)
                         matching_files.clear()
@@ -1574,7 +1456,6 @@ class FileSearchThread(QThread):
             if len(matching_files) >= self.max_results:
                 break
 
-        # Émettre les fichiers restants après la boucle
         if matching_files:
             self.files_found.emit(matching_files)
 

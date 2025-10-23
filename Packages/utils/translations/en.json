@@ -1,0 +1,105 @@
+{
+  "app": {
+    "title": "PipeZer",
+    "loading": "Loading...",
+    "initialization": "Initializing...",
+    "ready": "Ready!"
+  },
+  "preferences": {
+    "title": "PipeZer Configuration",
+    "welcome": "Welcome to PipeZer",
+    "subtitle": "Configure your working environment",
+    "step": "Step {current} of {total}",
+    "next": "Next",
+    "previous": "Previous",
+    "finish": "Finish",
+    "cancel": "Cancel",
+    "reset": "Reset"
+  },
+  "language": {
+    "title": "Language Selection",
+    "description": "Choose your preferred language",
+    "select": "Select language"
+  },
+  "username": {
+    "title": "Username",
+    "description": "Enter your username",
+    "placeholder": "Your username",
+    "required": "Username is required"
+  },
+  "theme": {
+    "title": "Interface Theme",
+    "description": "Choose your interface color",
+    "dark": "Dark",
+    "light": "Light",
+    "blue": "Blue",
+    "green": "Green",
+    "purple": "Purple"
+  },
+  "project": {
+    "title": "Project Selection",
+    "description": "Select your PipeZer project folder",
+    "select": "Select project folder",
+    "none_selected": "No project selected",
+    "required": "Project selection is required"
+  },
+  "pipeline": {
+    "title": "Pipeline Configuration",
+    "description": "Would you like to configure your pipeline structure?",
+    "create_new": "Create new folders",
+    "use_existing": "Use existing folders",
+    "skip": "Skip this step",
+    "new_description": "Create default folder structure (04_asset, 05_shot, 02_ressource)",
+    "existing_description": "Map folders already present in your project"
+  },
+  "buttons": {
+    "create_asset": "Create Asset",
+    "create_shot": "Create Shot",
+    "construct_pipeline": "Construct Pipeline",
+    "create_default_folders": "Create default folders",
+    "map_existing_folders": "Map existing folders",
+    "ok": "OK",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "continue": "Continue"
+  },
+  "dialogs": {
+    "construct_pipeline": {
+      "title": "Construct Pipeline",
+      "project": "Project: {project}",
+      "unset": "<unset>"
+    },
+    "user_edit": {
+      "title": "Edit Username",
+      "new_username": "New username:"
+    }
+  },
+  "navigation": {
+    "template": "Template",
+    "asset": "Asset",
+    "shot": "Shot",
+    "local_ldv": "Local LDV",
+    "local_compo": "Local COMP",
+    "crash": "Crash",
+    "user": "User",
+    "add_shortcut": "Add shortcut",
+    "open_file": "Open file",
+    "recent_files": "Recent files",
+    "crash_folder": "Crash folder",
+    "browser": "Browser",
+    "recent": "Recent",
+    "search": "Search",
+    "create_asset": "Create Asset",
+    "create_shot": "Create Shot",
+    "settings": "Settings",
+    "notifications": "Notifications"
+  },
+  "messages": {
+    "done": "Done",
+    "default_pipeline_folders_created": "Default pipeline folders created.",
+    "folders_mapped_created": "Folders mapped/created.",
+    "error_saving_username": "Error saving username: {error}",
+    "permissions_updated": "Permissions for {path} have been updated.",
+    "error_permissions": "Error modifying permissions: {error}"
+  }
+}

@@ -1,8 +1,12 @@
 import os
 import shutil
 import sys
-from PySide2.QtWidgets import QApplication
+import json
+from PySide2.QtWidgets import QApplication, QDialog
+from PySide2.QtCore import QTimer
 from Packages.apps.standalone.main_window_standalone import MainWindowStandalone
+from Packages.ui.dialogs.loading_dialog import LoadingDialog
+from Packages.ui.dialogs.loading_thread import LoadingThread
 from Packages.logic.json_funcs.convert_funcs import dict_to_json
 from Packages.utils.constants.version import VERSION, USER_VERSION
 from Packages.utils.constants.project_pipezer_data import CURRENT_PROJECT
@@ -26,32 +30,158 @@ from Packages.utils.constants.houdini_pref import (
 )
 from Packages.utils.app_finder import AppFinder
 from Packages.utils.init_project import InitProject
+from Packages.ui.dialogs.preferences_dialog import PreferencesDialog
+from Packages.utils.translation import translation_manager
 
 
 class PipeZerApp(QApplication):
 
     def __init__(self, argv=sys.argv):
         super(PipeZerApp, self).__init__(argv)
+        
+        # Afficher le dialog de chargement
+        self.loading_dialog = LoadingDialog()
+        self.loading_dialog.show_loading()
+        
+        # Créer et démarrer le thread de chargement
+        self.loading_thread = LoadingThread()
+        self.loading_thread.progress_updated.connect(self.loading_dialog.update_progress)
+        self.loading_thread.finished_loading.connect(self.on_loading_finished)
+        self.loading_thread.start()
+
+    def on_loading_finished(self):
+        """Appelé quand le chargement est terminé"""
+        # Fermer le dialog de chargement
+        self.loading_dialog.close()
+        
+        # Charger les préférences de langue
+        translation_manager.load_language_preference()
+        
+        # Effectuer les vérifications restantes
         self.check_pref()
         self.find_apps()
+
+        # Vérifier si c'est le premier lancement ou si les préférences sont manquantes
+        if self.is_first_launch() or not self.has_valid_preferences():
+            # Afficher le dialog de préférences
+            prefs_dialog = PreferencesDialog()
+            if prefs_dialog.exec_() == QDialog.Accepted:
+                prefs = prefs_dialog.get_preferences()
+                self.apply_preferences(prefs)
+            else:
+                self.quit()
+                sys.exit(0)
+        else:
+            # Charger les préférences existantes
+            self.load_existing_preferences()
 
         # Récupération dynamique du projet courant
         project_directory = get_current_value(CURRENT_PROJECT_JSON_PATH, 'current_project', '')
 
-        # Demander un projet si non défini ou invalide (réseau/non existant)
-        if (not project_directory) or (not os.path.isdir(project_directory)):
-            init_project_dialog = InitProject()
-            init_project_dialog.exec_()
-
-            if not init_project_dialog.ACCEPTED:
-                self.quit()
-                sys.exit(0)
-
-            project_directory = init_project_dialog.PROJECT
-
         # Définir le répertoire du projet ici (sélectionné ou chargé dynamiquement)
         self.check_pipezer_data_folder(project_directory)
         self.create_main_window()
+        
+    def is_first_launch(self):
+        """Vérifie si c'est le premier lancement"""
+        user_home_dir = os.path.expanduser("~")
+        pipezer_dir = os.path.join(user_home_dir, '.pipezer')
+        prefs_file = os.path.join(pipezer_dir, 'preferences.json')
+        return not os.path.exists(prefs_file)
+        
+    def has_valid_preferences(self):
+        """Vérifie si les préférences sont valides"""
+        try:
+            user_home_dir = os.path.expanduser("~")
+            pipezer_dir = os.path.join(user_home_dir, '.pipezer')
+            prefs_file = os.path.join(pipezer_dir, 'preferences.json')
+            
+            if not os.path.exists(prefs_file):
+                return False
+                
+            with open(prefs_file, 'r', encoding='utf-8') as f:
+                prefs = json.load(f)
+                
+            # Vérifier que tous les champs requis sont présents
+            required_fields = ['language', 'theme', 'username', 'project_path', 'pipeline_choice']
+            return all(field in prefs and prefs[field] for field in required_fields)
+            
+        except Exception:
+            return False
+            
+    def apply_preferences(self, prefs):
+        """Applique les préférences sélectionnées"""
+        # Sauvegarder le nom d'utilisateur
+        if prefs.get('username'):
+            self.save_username(prefs['username'])
+            
+        # Sauvegarder le projet
+        if prefs.get('project_path'):
+            self.save_project_path(prefs['project_path'])
+            
+        # Configurer le pipeline si demandé
+        if prefs.get('pipeline_choice') and prefs.get('project_path'):
+            self.configure_pipeline(prefs['pipeline_choice'], prefs['project_path'])
+            
+    def load_existing_preferences(self):
+        """Charge les préférences existantes"""
+        try:
+            user_home_dir = os.path.expanduser("~")
+            pipezer_dir = os.path.join(user_home_dir, '.pipezer')
+            prefs_file = os.path.join(pipezer_dir, 'preferences.json')
+            
+            with open(prefs_file, 'r', encoding='utf-8') as f:
+                prefs = json.load(f)
+                
+            # Appliquer la langue
+            if 'language' in prefs:
+                translation_manager.set_language(prefs['language'])
+                
+        except Exception as e:
+            print(f"Erreur lors du chargement des préférences: {e}")
+            
+    def save_username(self, username):
+        """Sauvegarde le nom d'utilisateur"""
+        try:
+            user_home_dir = os.path.expanduser("~")
+            pipezer_dir = os.path.join(user_home_dir, '.pipezer')
+            user_file_path = os.path.join(pipezer_dir, 'user.json')
+            
+            with open(user_file_path, 'w', encoding='utf-8') as f:
+                json.dump({"username": username}, f, indent=2, ensure_ascii=False)
+                
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde du nom d'utilisateur: {e}")
+            
+    def save_project_path(self, project_path):
+        """Sauvegarde le chemin du projet"""
+        try:
+            from Packages.logic.json_funcs.convert_funcs import json_to_dict, dict_to_json
+            
+            current_project_dict = json_to_dict(CURRENT_PROJECT_JSON_PATH)
+            current_project_dict['current_project'] = project_path
+            dict_to_json(current_project_dict, CURRENT_PROJECT_JSON_PATH)
+            
+        except Exception as e:
+            print(f"Erreur lors de la sauvegarde du projet: {e}")
+            
+    def configure_pipeline(self, choice, project_path):
+        """Configure le pipeline selon le choix de l'utilisateur"""
+        try:
+            if choice == "create_new":
+                # Créer les dossiers par défaut
+                for folder in ['04_asset', '05_shot', '02_ressource']:
+                    folder_path = os.path.join(project_path, folder)
+                    os.makedirs(folder_path, exist_ok=True)
+                print("Dossiers de pipeline créés avec succès")
+                
+            elif choice == "use_existing":
+                # Ici on pourrait implémenter la logique de mapping
+                # Pour l'instant, on affiche juste un message
+                print("Configuration du mapping des dossiers existants")
+            
+        except Exception as e:
+            print(f"Erreur lors de la configuration du pipeline: {e}")
 
     def check_pipezer_data_folder(self, project_directory):
         data_folder_path = os.path.join(project_directory, '.pipezer_data')
@@ -78,8 +208,6 @@ class PipeZerApp(QApplication):
 
     def find_apps(self):
         apps_dict = AppFinder().app_dict
-        import json
-
         with open(APPS_JSON_PATH, 'w', encoding='utf-8') as file:
             json.dump(apps_dict, file, indent=4, ensure_ascii=False)
 

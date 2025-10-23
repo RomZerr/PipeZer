@@ -16,7 +16,11 @@ class AppFinder:
         'photoshop': {'path': None, 'pref': None},
         'substance_designer': {'path': None, 'pref': None},
         'substance_painter': {'path': None, 'pref': None},
-        'zbrush': {'path': None, 'pref': None}
+        'zbrush': {'path': None, 'pref': None},
+        'unreal': {'path': None, 'pref': None},
+        'resolve': {'path': None, 'pref': None},
+        'mudbox': {'path': None, 'pref': None},
+        'embergen': {'path': None, 'pref': None}
     }
     
     
@@ -30,6 +34,12 @@ class AppFinder:
         self.app_dict['nuke']['path'] = self.find_nuke()
         self.app_dict['photoshop']['path'] = self.find_photoshop()
         self.app_dict['zbrush']['path'] = self.find_zbrush()
+        self.app_dict['unreal']['path'] = self.find_unreal()
+        self.app_dict['resolve']['path'] = self.find_resolve()
+        self.app_dict['mudbox']['path'] = self.find_mudbox()
+        self.app_dict['embergen']['path'] = self.find_embergen()
+        self.app_dict['substance_designer']['path'] = self.find_substance_designer()
+        self.app_dict['substance_painter']['path'] = self.find_substance_painter()
         
         self.app_dict['houdini']['pref'] = self.find_houdini_pref()
         self.app_dict['mari']['pref'] = self.find_mari_pref()
@@ -164,6 +174,70 @@ class AppFinder:
     
     def find_nuke_pref(self) -> str:
         return os.path.join(os.path.expanduser("~"), '.nuke')
+    
+    
+    def find_unreal(self) -> str:
+        """Trouve Unreal Engine (UE5)"""
+        exe: str = 'UnrealEditor.exe'
+        parent_dir: str = os.path.join(self.PROGRAM_FILES, 'Epic Games')
+        dir_string: str = 'UE_'
+        version_dir = self.find_directory(parent_directory=parent_dir, directory_string=dir_string)
+        if not version_dir:
+            return None
+        path_candidate = os.path.join(parent_dir, version_dir, 'Engine', 'Binaries', 'Win64', exe).replace('\\', '/')
+        return path_candidate if os.path.exists(path_candidate) else None
+    
+    
+    def find_resolve(self) -> str:
+        """Trouve DaVinci Resolve"""
+        exe: str = 'Resolve.exe'
+        parent_dir: str = os.path.join(self.PROGRAM_FILES, 'Blackmagic Design')
+        dir_string: str = 'DaVinci Resolve'
+        version_dir = self.find_directory(parent_directory=parent_dir, directory_string=dir_string)
+        if not version_dir:
+            return None
+        path_candidate = os.path.join(parent_dir, version_dir, exe).replace('\\', '/')
+        return path_candidate if os.path.exists(path_candidate) else None
+    
+    
+    def find_mudbox(self) -> str:
+        """Trouve Autodesk Mudbox"""
+        exe: str = 'mudbox.exe'
+        parent_dir: str = os.path.join(self.PROGRAM_FILES, 'Autodesk')
+        dir_string: str = 'Mudbox'
+        version_dir = self.find_directory(parent_directory=parent_dir, directory_string=dir_string)
+        if not version_dir:
+            return None
+        path_candidate = os.path.join(parent_dir, version_dir, 'bin', exe).replace('\\', '/')
+        return path_candidate if os.path.exists(path_candidate) else None
+    
+    
+    def find_embergen(self) -> str:
+        """Trouve EmberGen"""
+        exe: str = 'EmberGen.exe'
+        parent_dir: str = os.path.join(self.PROGRAM_FILES, 'JangaFX')
+        dir_string: str = 'EmberGen'
+        version_dir = self.find_directory(parent_directory=parent_dir, directory_string=dir_string)
+        if not version_dir:
+            return None
+        path_candidate = os.path.join(parent_dir, version_dir, exe).replace('\\', '/')
+        return path_candidate if os.path.exists(path_candidate) else None
+    
+    
+    def find_substance_designer(self) -> str:
+        """Trouve Substance 3D Designer"""
+        exe: str = 'Adobe Substance 3D Designer.exe'
+        parent_dir: str = os.path.join(self.PROGRAM_FILES, 'Adobe', 'Adobe Substance 3D Designer')
+        path_candidate = os.path.join(parent_dir, exe).replace('\\', '/')
+        return path_candidate if os.path.exists(path_candidate) else None
+    
+    
+    def find_substance_painter(self) -> str:
+        """Trouve Substance 3D Painter"""
+        exe: str = 'Adobe Substance 3D Painter.exe'
+        parent_dir: str = os.path.join(self.PROGRAM_FILES, 'Adobe', 'Adobe Substance 3D Painter')
+        path_candidate = os.path.join(parent_dir, exe).replace('\\', '/')
+        return path_candidate if os.path.exists(path_candidate) else None
 
 
 if __name__ == '__main__':

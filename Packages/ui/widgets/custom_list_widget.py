@@ -40,6 +40,36 @@ class CustomListWidget(QListWidget):
         self.setFocusPolicy(Qt.NoFocus)
         if max_height:
             self.setMaximumHeight(max_height)
+        
+        # Appliquer les styles modernes avec bordures élégantes
+        self.setStyleSheet("""
+            QListWidget {
+                background-color: #1C1C1C;
+                border: 1px solid #3A3A3A;
+                border-radius: 8px;
+                padding: 5px;
+                outline: none;
+            }
+            QListWidget::item {
+                background-color: transparent;
+                border-bottom: 2px solid #2A2A2A;
+                padding: 10px 8px;
+                margin-bottom: 2px;
+                border-radius: 4px;
+                color: #E6EDF3;
+            }
+            QListWidget::item:last {
+                border-bottom: none;
+            }
+            QListWidget::item:selected {
+                background-color: #6366F1;
+                color: #FFFFFF;
+                border-bottom: 2px solid #5558E3;
+            }
+            QListWidget::item:hover:!selected {
+                background-color: #2A2A2A;
+            }
+        """)
 
     def create_context_menu(self, project_action: bool = False):
         self._create_context_menu(project_action=project_action)

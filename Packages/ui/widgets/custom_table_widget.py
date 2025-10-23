@@ -1,9 +1,11 @@
 import os
-import re  # Importer le module re pour extraire les versions
+import re
 import concurrent.futures
-from PySide2.QtCore import Qt
-from PySide2.QtGui import QFont, QIcon
-from PySide2.QtWidgets import QTableWidget, QTableWidgetItem, QAbstractItemView, QHeaderView
+from PySide2.QtCore import Qt, Signal, QRect
+from PySide2.QtGui import QFont, QIcon, QPainter, QPen, QColor
+from PySide2.QtWidgets import (QTableWidget, QTableWidgetItem, QAbstractItemView, 
+                               QHeaderView, QMenu, QAction, QInputDialog, QMessageBox)
+from Packages.utils.translations import translation_manager
 from Packages.logic.filefunc import get_version_num, get_file_modification_date_time
 from Packages.logic.json_funcs import get_file_data
 from Packages.logic.filefunc import get_files
@@ -18,44 +20,191 @@ from PySide2.QtGui import QBrush, QColor, QIcon, QPixmap
 
 
 def extract_version_from_filename(filename):
-    """
-    Extrait la version d'un nom de fichier sous forme de '_XXX.'.
-    Retourne '_XXX.' ou None si aucune version n'est trouvée.
-    """
-    match = re.search(r'_(\d{3}).', filename)  # Recherche du motif '_XXX.'
+    """Extracts version from filename in '_XXX.' format"""
+    match = re.search(r'_(\d{3}).', filename)
     if match:
-        return match.group(1)  # Retourne '_XXX.'
+        return match.group(1)
     return None
 
 
 class CustomTableWidget(QTableWidget):
+    file_renamed = Signal(str, str)
+    file_duplicated = Signal(str, str)
+    open_in_explorer = Signal(str)
 
     def __init__(self, parent=None):
         super(CustomTableWidget, self).__init__(parent)
 
         self.setMouseTracking(True)
-        self.itemEntered.connect(self.showFileNameOnHover)
-
-    def showFileNameOnHover(self, item):
-        if item is not None:
-            file_path = item.data(32)  # Récupérer le "nom de fichier" depuis le data
-            if not file_path:
-                return
-            file_name = os.path.basename(file_path)
-            tooltip_text = f'<span style="font-size: 20px; background-color: white; color: black; border: 0px transparent;">{file_name}</span>'
-            self.setToolTip(tooltip_text)  # Afficher le "nom de fichier" dans un tooltip
+        
+        self._hovered_row = -1
+        self._user_has_selected = False
+        
+        self.cellClicked.connect(self.onCellClicked)
+        self.itemSelectionChanged.connect(self.onSelectionChanged)
+        
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.show_context_menu)
+    
+    def onCellClicked(self, row, column):
+        """Forces row selection when clicking on a cell"""
+        self._user_has_selected = True
+        self.selectRow(row)
+        self._apply_row_selection_style(row)
+    
+    def onSelectionChanged(self):
+        """Handles selection change to clean old selections"""
+        for row in range(self.rowCount()):
+            if row != self.currentRow():
+                self._clear_row_selection_style(row)
+        
+        current_row = self.currentRow()
+        if current_row >= 0:
+            self._apply_row_selection_style(current_row)
+    
+    def _apply_row_selection_style(self, row):
+        """Applies selection style to all cells in the row"""
+        if row < 0 or row >= self.rowCount():
+            return
+            
+        selection_text_color = QColor(230, 237, 243)
+        
+        for col in range(self.columnCount()):
+            item = self.item(row, col)
+            if item:
+                item.setSelected(True)
+                item.setForeground(QBrush(selection_text_color))
+            
+            widget = self.cellWidget(row, col)
+            if widget:
+                widget.setStyleSheet("""
+                    QLabel {
+                        background-color: transparent;
+                        border: none;
+                        padding: 4px;
+                    }
+                """)
+        
+        self.viewport().update()
+    
+    def _clear_row_selection_style(self, row):
+        """Removes selection style from all cells in the row"""
+        if row < 0 or row >= self.rowCount():
+            return
+            
+        for col in range(self.columnCount()):
+            item = self.item(row, col)
+            if item:
+                item.setSelected(False)
+                item.setBackground(QBrush(QColor(28, 28, 28)))
+                item.setForeground(QBrush(QColor(255, 255, 255)))
+            
+            widget = self.cellWidget(row, col)
+            if widget:
+                widget.setStyleSheet("""
+                    QLabel {
+                        background-color: transparent;
+                        border: none;
+                        padding: 4px;
+                    }
+                """)
+        
+        self.viewport().update()
+    
+    def mouseMoveEvent(self, event):
+        """Handles mouse movement for row hover"""
+        super().mouseMoveEvent(event)
+        
+        index = self.indexAt(event.pos())
+        new_hovered_row = index.row() if index.isValid() else -1
+        
+        if new_hovered_row != self._hovered_row:
+            if self._hovered_row >= 0:
+                self._clear_row_hover_style(self._hovered_row)
+            
+            self._hovered_row = new_hovered_row
+            if self._hovered_row >= 0 and self._hovered_row != self.currentRow():
+                self._apply_row_hover_style(self._hovered_row)
+    
+    def leaveEvent(self, event):
+        """Handles mouse leaving the widget"""
+        super().leaveEvent(event)
+        if self._hovered_row >= 0:
+            self._clear_row_hover_style(self._hovered_row)
+            self._hovered_row = -1
+    
+    def _apply_row_hover_style(self, row):
+        """Applies hover style to the entire row"""
+        if row < 0 or row >= self.rowCount():
+            return
+        
+        self.viewport().update()
+    
+    def _clear_row_hover_style(self, row):
+        """Removes hover style from a row"""
+        if row < 0 or row >= self.rowCount():
+            return
+        
+        self.viewport().update()
+    
+    def paintEvent(self, event):
+        """Draws table and adds border and background for selected row"""
+        current_row = self.currentRow()
+        if current_row >= 0 and self._user_has_selected:
+            painter = QPainter(self.viewport())
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            first_col_rect = self.visualRect(self.model().index(current_row, 0))
+            last_col_rect = self.visualRect(self.model().index(current_row, self.columnCount() - 1))
+            
+            row_rect = QRect(
+                first_col_rect.left(),
+                first_col_rect.top(),
+                last_col_rect.right() - first_col_rect.left(),
+                first_col_rect.height()
+            )
+            
+            painter.setPen(Qt.NoPen)
+            painter.setBrush(QColor(70, 70, 80))
+            painter.drawRoundedRect(row_rect, 4, 4)
+            
+            painter.end()
+        
+        super().paintEvent(event)
+        
+        # Enfin, dessiner la bordure PAR-DESSUS tout
+        if current_row >= 0 and self._user_has_selected:
+            painter = QPainter(self.viewport())
+            painter.setRenderHint(QPainter.Antialiasing)
+            
+            # Recalculer le rectangle
+            first_col_rect = self.visualRect(self.model().index(current_row, 0))
+            last_col_rect = self.visualRect(self.model().index(current_row, self.columnCount() - 1))
+            
+            row_rect = QRect(
+                first_col_rect.left(),
+                first_col_rect.top(),
+                last_col_rect.right() - first_col_rect.left(),
+                first_col_rect.height()
+            )
+            
+            # Dessiner la bordure
+            pen = QPen(QColor(99, 102, 241))  # Couleur bleue
+            pen.setWidth(2)
+            painter.setPen(pen)
+            painter.setBrush(Qt.NoBrush)  # Pas de remplissage
+            painter.drawRoundedRect(row_rect, 4, 4)
+            
+            painter.end()
 
     def clear_table(self):
-        """Efface toutes les lignes du tableau."""
+        """Clears all table rows"""
         while self.rowCount() > 0:
             self.removeRow(0)
 
     def set_data(self, data):
-        """Remplit le tableau avec les données fournies.
-
-        data: liste de listes, où chaque sous-liste contient les informations d'un fichier
-        """
-        self.setRowCount(len(data))  # Définit le nombre de lignes du tableau
+        """Fills table with provided data"""
+        self.setRowCount(len(data))
         for row, file_info in enumerate(data):
             for col, value in enumerate(file_info):
                 self.setItem(row, col, QTableWidgetItem(value))
@@ -69,7 +218,7 @@ class CustomTableWidget(QTableWidget):
         self.setVerticalScrollMode(QAbstractItemView.ScrollPerPixel)
         self.setShowGrid(False)
         self.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.setAlternatingRowColors(True)
+        self.setAlternatingRowColors(False)
         self.setSelectionMode(QAbstractItemView.SingleSelection)
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSortingEnabled(True)
@@ -80,7 +229,46 @@ class CustomTableWidget(QTableWidget):
         self.verticalHeader().setVisible(False)
         self.verticalHeader().setCascadingSectionResizes(False)
         self.verticalHeader().setHighlightSections(False)
-        self.setFocusPolicy(Qt.NoFocus)
+        self.setFocusPolicy(Qt.StrongFocus)
+        
+        self.setStyleSheet("""
+            QTableWidget {
+                background-color: #1C1C1C;
+                alternate-background-color: #1C1C1C;
+                selection-background-color: transparent;
+                gridline-color: transparent;
+                border: 1px solid #2A2A2A;
+                border-radius: 4px;
+                show-decoration-selected: 0;
+                outline: none;
+            }
+            QTableWidget::item {
+                background-color: transparent;
+                border-bottom: 1px solid #2A2A2A;
+                border-right: none;
+                border-left: none;
+                padding: 8px;
+                outline: none;
+            }
+            QTableWidget::item:selected {
+                background-color: transparent;
+                border: none;
+                outline: none;
+            }
+            QTableWidget::item:hover {
+                background-color: transparent;
+                outline: none;
+            }
+            QTableWidget::item:pressed {
+                background-color: transparent;
+                outline: none;
+            }
+            QTableWidget::item:focus {
+                background-color: transparent;
+                border: none;
+                outline: none;
+            }
+        """)
 
         column_count = len(columns)
         self.setColumnCount(column_count)
@@ -109,13 +297,10 @@ class CustomTableWidget(QTableWidget):
         self.insertRow(row_position)
         self.setRowHeight(row_position, 101)
 
-        # Créer les items pour chaque colonne
-
-        # 0 - File Name
         file_name_item = QTableWidgetItem(filename)
         file_name_item.setData(32, filepath)
+        file_name_item.setFlags(Qt.ItemIsEnabled)
 
-        # 1 - Image
         def _image_item():
             img_exts = ['.png', '.jpg', '.tex', '.exr']
             ext = os.path.splitext(filename)[-1]
@@ -124,16 +309,15 @@ class CustomTableWidget(QTableWidget):
             image_item.setData(32, filepath)
             return image_item
 
-        # 2 - Version
         def _version_item():
             version_item = QTableWidgetItem()
             version_item.setData(32, filepath)
+            version_item.setFlags(Qt.ItemIsEnabled)
             version_item.setTextAlignment(Qt.AlignCenter)
             font = QFont()
             font.setPointSize(12)
             version_item.setFont(font)
 
-            # Dictionnaire pour les mots-clés et leurs descriptions
             keywords = {
                 "_geoT": "GEO Temporaire",
                 "_geo": "GEO",
@@ -149,25 +333,21 @@ class CustomTableWidget(QTableWidget):
                 "_Card_materials": "CARDS MATERIAL"
             }
 
-            # Vérifier si le fichier est un .usd ou .usda avec des mots-clés
             if filename.endswith((".usd", ".usda")):
                 for key, value in keywords.items():
                     if key in filename:
                         version_item.setText(value)
                         break
                 else:
-                    version_item.setText("USD")  # Par défaut si aucun mot-clé spécifique n'est trouvé
+                    version_item.setText("USD")
 
-            # Vérifier pour PUBLISH
             elif "_P." in filename:
                 version_item.setText("PUBLISH")
 
-            # Sinon, extraire la version
             else:
                 version = extract_version_from_filename(filename)
                 version_item.setText(version if version else "N/A")
 
-            # Ajouter l'icône pour les fichiers USD ou USDA
             if os.path.splitext(filename)[-1] in ('.usd', '.usda'):
                 self._add_icon(version_item, 'usd')
 
@@ -177,6 +357,7 @@ class CustomTableWidget(QTableWidget):
         def _comment_item():
             comment_item = QTableWidgetItem()
             comment_item.setData(32, filepath)
+            comment_item.setFlags(Qt.ItemIsEnabled)
             comment_data = get_file_data(filepath)['comment']
             comment_item.setText(comment_data)
             return comment_item
@@ -185,12 +366,12 @@ class CustomTableWidget(QTableWidget):
         def _user_item():
             user_item = QTableWidgetItem()
             user_item.setData(32, filepath)
+            user_item.setFlags(Qt.ItemIsEnabled)
             user_item.setTextAlignment(Qt.AlignCenter)
             user_data = f"{get_file_data(filepath)['user']}\n{get_file_modification_date_time(filepath)}\n{get_size(filepath)}"
             user_item.setText(user_data)
             return user_item
 
-        # Exécution des tâches en parallèle ou séquentiellement
         if parallel:
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 version_item = executor.submit(_version_item)
@@ -209,7 +390,6 @@ class CustomTableWidget(QTableWidget):
             comment_item = _comment_item()
             user_item = _user_item()
 
-        # Ajouter les éléments au tableau
         self.setItem(row_position, 0, file_name_item)  # Colonne "File Name"
         self.setCellWidget(row_position, 1, image_item)  # Colonne "Image"
         self.setItem(row_position, 2, version_item)  # Colonne "Version"
@@ -217,9 +397,7 @@ class CustomTableWidget(QTableWidget):
         self.setItem(row_position, 4, user_item)  # Colonne "Infos"
 
     def update_file_items(self, directory):
-        """
-        Met à jour les éléments de fichier dans le tableau à partir d'un répertoire.
-        """
+        """Updates file items in table from directory"""
 
         self.setRowCount(0)
 
@@ -246,11 +424,13 @@ class CustomTableWidget(QTableWidget):
 
         for file_path in file_path_list:
             self.add_item(file_path)
+        
+        self.clearSelection()
+        self.setCurrentCell(-1, -1)
+        self._user_has_selected = False
 
     def _add_icon(self, widget, text="", bw: bool = False):
-        """
-        Ajoute une icône à un widget de tableau.
-        """
+        """Adds icon to table widget"""
 
         bw_dict = {True: '_bw', False: ''}
 
@@ -265,14 +445,131 @@ class CustomTableWidget(QTableWidget):
         """
         Filtre les fichiers affichés dans le tableau en fonction du nom sélectionné.
         """
-        # Récupérer tous les fichiers correspondant au nom sélectionné
-        all_files = self.get_all_files()  # Méthode à définir ou récupérer les fichiers pertinents
+        all_files = self.get_all_files()
         filtered_files = [file for file in all_files if name in file]
 
-        # Mettre à jour l'affichage du tableau avec les fichiers filtrés
         self.clearContents()
-        self.setRowCount(0)  # Réinitialiser le tableau
+        self.setRowCount(0)
 
         for file in filtered_files:
-            self.add_file_to_table(file)  # Ajouter chaque fichier filtré au tableau (méthode à définir)
+            self.add_file_to_table(file)
+    
+    def show_context_menu(self, position):
+        """Shows context menu on right click"""
+        current_row = self.currentRow()
+        if current_row < 0:
+            return
+        
+        file_path_item = self.item(current_row, 0)
+        if not file_path_item:
+            return
+        
+        file_path = file_path_item.data(32)
+        if not file_path or not os.path.exists(file_path):
+            return
+        
+        context_menu = QMenu(self)
+        
+        # Action Renommer
+        rename_action = QAction(translation_manager.get_text('rename'), self)
+        rename_action.triggered.connect(lambda: self.rename_file(file_path))
+        context_menu.addAction(rename_action)
+        
+        # Action Dupliquer
+        duplicate_action = QAction(translation_manager.get_text('duplicate'), self)
+        duplicate_action.triggered.connect(lambda: self.duplicate_file(file_path))
+        context_menu.addAction(duplicate_action)
+        
+        # Action Ouvrir dans l'explorateur
+        explorer_action = QAction(translation_manager.get_text('open_in_explorer'), self)
+        explorer_action.triggered.connect(lambda: self.open_in_explorer_action(file_path))
+        context_menu.addAction(explorer_action)
+        
+        # Afficher le menu
+        context_menu.exec_(self.mapToGlobal(position))
+    
+    def rename_file(self, file_path):
+        """Renomme le fichier sélectionné"""
+        if not os.path.exists(file_path):
+            QMessageBox.warning(self, "Erreur", "Le fichier n'existe pas.")
+            return
+        
+        current_name = os.path.basename(file_path)
+        directory = os.path.dirname(file_path)
+        
+        new_name, ok = QInputDialog.getText(
+            self, 
+            "Renommer le fichier", 
+            f"Nouveau nom pour '{current_name}':",
+            text=current_name
+        )
+        
+        if ok and new_name and new_name != current_name:
+            new_path = os.path.join(directory, new_name)
+            
+            if os.path.exists(new_path):
+                QMessageBox.warning(self, "Erreur", "Un fichier avec ce nom existe déjà.")
+                return
+            
+            try:
+                os.rename(file_path, new_path)
+                self.file_renamed.emit(file_path, new_path)
+                QMessageBox.information(self, "Succès", f"Le fichier a été renommé en '{new_name}'.")
+                
+            except Exception as e:
+                QMessageBox.critical(self, "Erreur", f"Impossible de renommer le fichier: {str(e)}")
+    
+    def duplicate_file(self, file_path):
+        """Duplicates selected file with automatic version increment"""
+        if not os.path.exists(file_path):
+            QMessageBox.warning(self, "Erreur", "Le fichier n'existe pas.")
+            return
+        
+        try:
+            directory = os.path.dirname(file_path)
+            filename = os.path.basename(file_path)
+            name, ext = os.path.splitext(filename)
+            
+            import re
+            version_match = re.search(r'(\d{3})$', name)
+            
+            if version_match:
+                current_version = int(version_match.group(1))
+                new_version = current_version + 1
+                new_name = re.sub(r'\d{3}$', f"{new_version:03d}", name)
+            else:
+                new_name = f"{name}_001"
+            
+            new_filename = f"{new_name}{ext}"
+            new_path = os.path.join(directory, new_filename)
+            
+            counter = 1
+            original_new_path = new_path
+            while os.path.exists(new_path):
+                if version_match:
+                    new_version += 1
+                    new_name = re.sub(r'\d{3}$', f"{new_version:03d}", name)
+                else:
+                    new_name = f"{name}_{counter:03d}"
+                new_filename = f"{new_name}{ext}"
+                new_path = os.path.join(directory, new_filename)
+                counter += 1
+            
+            import shutil
+            shutil.copy2(file_path, new_path)
+            
+            self.file_duplicated.emit(file_path, new_path)
+            
+            QMessageBox.information(self, "Succès", f"Le fichier a été dupliqué en '{os.path.basename(new_path)}'.")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Erreur", f"Impossible de dupliquer le fichier: {str(e)}")
+    
+    def open_in_explorer_action(self, file_path):
+        """Ouvre l'explorateur Windows à l'emplacement du fichier"""
+        try:
+            # Émettre le signal pour ouvrir dans l'explorateur
+            self.open_in_explorer.emit(file_path)
+        except Exception as e:
+            print(f"Erreur lors de l'ouverture de l'explorateur: {str(e)}")
 

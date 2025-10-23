@@ -1,0 +1,211 @@
+"""
+Système de traduction multilingue pour PipeZer
+"""
+
+# Dictionnaire des traductions
+TRANSLATIONS = {
+    'fr': {
+        'template': 'Template',
+        'asset': 'Asset',
+        'shot': 'Shot',
+        'crash': 'Crash',
+        'recent': 'Recent',
+        'search': 'Search',
+        'create_asset': 'Create Asset',
+        'create_shot': 'Create Shot',
+        'settings': 'Paramètres',
+        'notifications': 'Notifications',
+        'browser': 'Navigateur',
+        'user': 'Utilisateur',
+        'add_shortcut': 'Ajouter un raccourci',
+        'open_file': 'Ouvrir le fichier',
+        'recent_files': 'Fichiers récents',
+        'crash_folder': 'Dossier Crash',
+        'page_title': 'Titre de la page',
+        'rename': 'Renommer',
+        'duplicate': 'Dupliquer',
+        'open_in_explorer': 'Ouvrir dans l\'explorateur',
+        'create_asset_desc': 'Créez un nouvel asset pour votre projet',
+        'asset_info': 'Informations de l\'asset',
+        'asset_name': 'Nom de l\'asset',
+        'asset_name_placeholder': 'Ex: Character_Hero',
+        'asset_type': 'Type d\'asset',
+        'character': 'Personnage',
+        'prop': 'Accessoire',
+        'environment': 'Environnement',
+        'vehicle': 'Véhicule',
+        'other': 'Autre',
+        'description': 'Description',
+        'description_placeholder': 'Description optionnelle',
+        'cancel': 'Annuler',
+        'create': 'Créer',
+        'warning': 'Attention',
+        'asset_name_required': 'Le nom de l\'asset est requis',
+        'asset_exists': 'Un asset avec ce nom existe déjà',
+        'success': 'Succès',
+        'asset_created_success': 'Asset créé avec succès',
+        'error': 'Erreur',
+        'create_error': 'Erreur lors de la création',
+        'create_shot_desc': 'Créez un nouveau shot pour votre séquence',
+        'shot_info': 'Informations du shot',
+        'shot_name': 'Nom du shot',
+        'shot_name_placeholder': 'Ex: Hero_Entrance',
+        'sequence': 'Séquence',
+        'sequence_placeholder': 'Ex: SEQ_001',
+        'shot_number': 'Numéro du shot',
+        'shot_type': 'Type de shot',
+        'animation': 'Animation',
+        'lighting': 'Éclairage',
+        'compositing': 'Compositing',
+        'fx': 'Effets',
+        'shot_name_required': 'Le nom du shot est requis',
+        'sequence_required': 'La séquence est requise',
+        'shot_exists': 'Un shot avec ce nom existe déjà',
+        'shot_created_success': 'Shot créé avec succès'
+    },
+    'en': {
+        'template': 'Template',
+        'asset': 'Asset',
+        'shot': 'Shot',
+        'crash': 'Crash',
+        'recent': 'Recent',
+        'search': 'Search',
+        'create_asset': 'Create Asset',
+        'create_shot': 'Create Shot',
+        'settings': 'Settings',
+        'notifications': 'Notifications',
+        'browser': 'Browser',
+        'user': 'User',
+        'add_shortcut': 'Add shortcut',
+        'open_file': 'Open file',
+        'recent_files': 'Recent files',
+        'crash_folder': 'Crash folder',
+        'page_title': 'Page title',
+        'rename': 'Rename',
+        'duplicate': 'Duplicate',
+        'open_in_explorer': 'Open in explorer',
+        'create_asset_desc': 'Create a new asset for your project',
+        'asset_info': 'Asset information',
+        'asset_name': 'Asset name',
+        'asset_name_placeholder': 'Ex: Character_Hero',
+        'asset_type': 'Asset type',
+        'character': 'Character',
+        'prop': 'Prop',
+        'environment': 'Environment',
+        'vehicle': 'Vehicle',
+        'other': 'Other',
+        'description': 'Description',
+        'description_placeholder': 'Optional description',
+        'cancel': 'Cancel',
+        'create': 'Create',
+        'warning': 'Warning',
+        'asset_name_required': 'Asset name is required',
+        'asset_exists': 'An asset with this name already exists',
+        'success': 'Success',
+        'asset_created_success': 'Asset created successfully',
+        'error': 'Error',
+        'create_error': 'Error during creation',
+        'create_shot_desc': 'Create a new shot for your sequence',
+        'shot_info': 'Shot information',
+        'shot_name': 'Shot name',
+        'shot_name_placeholder': 'Ex: Hero_Entrance',
+        'sequence': 'Sequence',
+        'sequence_placeholder': 'Ex: SEQ_001',
+        'shot_number': 'Shot number',
+        'shot_type': 'Shot type',
+        'animation': 'Animation',
+        'lighting': 'Lighting',
+        'compositing': 'Compositing',
+        'fx': 'Effects',
+        'shot_name_required': 'Shot name is required',
+        'sequence_required': 'Sequence is required',
+        'shot_exists': 'A shot with this name already exists',
+        'shot_created_success': 'Shot created successfully'
+    },
+    'es': {
+        'template': 'Plantilla',
+        'asset': 'Asset',
+        'shot': 'Toma',
+        'crash': 'Crash',
+        'recent': 'Reciente',
+        'search': 'Buscar',
+        'create_asset': 'Crear Asset',
+        'create_shot': 'Crear Toma',
+        'settings': 'Configuración',
+        'notifications': 'Notificaciones',
+        'browser': 'Navegador',
+        'user': 'Usuario',
+        'add_shortcut': 'Agregar atajo',
+        'open_file': 'Abrir archivo',
+        'recent_files': 'Archivos recientes',
+        'crash_folder': 'Carpeta Crash',
+        'page_title': 'Título de página',
+        'rename': 'Renombrar',
+        'duplicate': 'Duplicar',
+        'open_in_explorer': 'Abrir en explorador',
+        'create_asset_desc': 'Crear un nuevo asset para tu proyecto',
+        'asset_info': 'Información del asset',
+        'asset_name': 'Nombre del asset',
+        'asset_name_placeholder': 'Ej: Character_Hero',
+        'asset_type': 'Tipo de asset',
+        'character': 'Personaje',
+        'prop': 'Accesorio',
+        'environment': 'Entorno',
+        'vehicle': 'Vehículo',
+        'other': 'Otro',
+        'description': 'Descripción',
+        'description_placeholder': 'Descripción opcional',
+        'cancel': 'Cancelar',
+        'create': 'Crear',
+        'warning': 'Advertencia',
+        'asset_name_required': 'El nombre del asset es requerido',
+        'asset_exists': 'Ya existe un asset con este nombre',
+        'success': 'Éxito',
+        'asset_created_success': 'Asset creado exitosamente',
+        'error': 'Error',
+        'create_error': 'Error durante la creación',
+        'create_shot_desc': 'Crear un nuevo shot para tu secuencia',
+        'shot_info': 'Información del shot',
+        'shot_name': 'Nombre del shot',
+        'shot_name_placeholder': 'Ej: Hero_Entrance',
+        'sequence': 'Secuencia',
+        'sequence_placeholder': 'Ej: SEQ_001',
+        'shot_number': 'Número del shot',
+        'shot_type': 'Tipo de shot',
+        'animation': 'Animación',
+        'lighting': 'Iluminación',
+        'compositing': 'Compositing',
+        'fx': 'Efectos',
+        'shot_name_required': 'El nombre del shot es requerido',
+        'sequence_required': 'La secuencia es requerida',
+        'shot_exists': 'Ya existe un shot con este nombre',
+        'shot_created_success': 'Shot creado exitosamente'
+    }
+}
+
+class TranslationManager:
+    """Gestionnaire de traductions"""
+    
+    def __init__(self):
+        self.current_language = 'en'  # Default language
+        self.translations = TRANSLATIONS
+    
+    def set_language(self, language):
+        """Change la langue actuelle"""
+        if language in self.translations:
+            self.current_language = language
+            return True
+        return False
+    
+    def get_text(self, key):
+        """Récupère le texte traduit pour la clé donnée"""
+        if self.current_language in self.translations:
+            return self.translations[self.current_language].get(key, key)
+        return key
+    
+    def get_available_languages(self):
+        """Retourne la liste des langues disponibles"""
+        return list(self.translations.keys())
+
+# Instance globale du gestionnaire de traductions
+translation_manager = TranslationManager()

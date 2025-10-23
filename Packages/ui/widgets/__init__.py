@@ -2,10 +2,8 @@ from Packages.ui.widgets.corner_widget import CornerWidget
 from Packages.ui.widgets.custom_label import CustomLabel
 from Packages.ui.widgets.custom_list_widget import CustomListWidget
 from Packages.ui.widgets.custom_list_widget_item import CustomListWidgetItem
-from Packages.ui.widgets.custom_radio_button import CustomRadioButton
 from Packages.ui.widgets.custom_table_widget import CustomTableWidget
 from Packages.ui.widgets.image_widget import ImageWidget
-# CustomMenuBar supprimé car non utilisé
 from Packages.ui.widgets.open_file_widget import OpenFileWidget
 from Packages.ui.widgets.status_bar import StatusBar
 from Packages.ui.widgets.custom_main_window import CustomMainWindow

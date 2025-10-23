@@ -1,10 +1,18 @@
+"""
+Fenêtre principale standalone moderne
+"""
+
 import os
 from Packages.ui.base_main_window import BaseMainWindow
+from Packages.ui.modern_main_window import ModernMainWindow
+from Packages.ui.modern_settings_widget import ModernSettingsWidget
+from Packages.ui.content_migrator import ContentMigrator
 from Packages.ui.widgets import OpenFileWidget
 from Packages.utils.logger import init_logger
 from Packages.logic import json_funcs
 from PySide2.QtCore import Qt, QSize
 from PySide2.QtGui import QIcon
+from PySide2.QtWidgets import QVBoxLayout, QLabel
 from PySide2.QtWidgets import QPushButton, QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy
 from Packages.ui.dialogs.create_shot_dialog import CreateShotDialog
 from Packages.ui.base_main_window import CreateAssetDialogStandalone
@@ -12,242 +20,226 @@ from Packages.ui.base_main_window import CreateAssetDialogStandalone
 
 logger = init_logger(__file__)
 
-class MainWindowStandalone(BaseMainWindow):
+class MainWindowStandalone(ModernMainWindow):
     """
+    Fenêtre principale standalone avec interface moderne
     """
     def __init__(self, parent = None):
-        super(MainWindowStandalone, self).__init__(parent, set_style = True)
+        super(MainWindowStandalone, self).__init__(parent)
+        self.setup_standalone_content()
         self.add_dev_mode()
 
         # Définir la taille initiale de la fenêtre
         self.setGeometry(100, 100, 1700, 1000)  # Position x, y et taille largeur x hauteur
 
-    def create_widgets(self):
-        super().create_widgets()
-        self._open_file_widget_browser = OpenFileWidget(self.current_directory)
-        self._open_file_widget_browser.setObjectName("_open_file_widget_browser")
-        self._open_file_widget_recent = OpenFileWidget(None)
-        self._open_file_widget_browser.setObjectName("_open_file_widget_recent")
-        self._open_file_widget_search_file = OpenFileWidget(None)
-        self._open_file_widget_search_file.setObjectName("_open_file_widget_search_file")
-
-    def create_layout(self):
-        super().create_layout()
-        self._browser_file_layout.addWidget(self._open_file_widget_browser)
-        self._recent_file_layout.addWidget(self._open_file_widget_recent)
-        self._search_file_layout.addWidget(self._open_file_widget_search_file)
-
-        # Créer un layout vertical pour les boutons
-        button_layout = QHBoxLayout()
-
-        # Créer le bouton "Create Asset" avec une taille spécifique
-        self.create_asset_button = QPushButton("Create Asset", self)
-        self.create_asset_button.setCheckable(True)
-        font = self.create_asset_button.font()
-        font.setPointSize(10)
-        self.create_asset_button.setFont(font)
-        self.create_asset_button.setFixedSize(200, 40)
-        self.create_asset_button.clicked.connect(self.open_create_asset_dialog)
-
-
-        # Ajouter le bouton "Create Asset" au layout vertical
-        button_layout.addWidget(self.create_asset_button)
-
-        # Créer le bouton "Create Shot" avec une taille spécifique
-        self.create_shot_button = QPushButton("Create Shot", self)
-        self.create_shot_button.setCheckable(True)
-        font = self.create_shot_button.font()
-        font.setPointSize(10)
-        self.create_shot_button.setFont(font)
-        self.create_shot_button.setFixedSize(200, 40)
-        self.create_shot_button.clicked.connect(self.open_create_shot_dialog)
-
-
-        # Ajouter le bouton "Create Shot" juste en dessous du bouton "Create Asset"
-        button_layout.addWidget(self.create_shot_button)
-
-        # Créer le bouton "Construct Pipeline" à côté
-        self.construct_pipeline_button = QPushButton("Construct Pipeline", self)
-        self.construct_pipeline_button.setCheckable(True)
-        font2 = self.construct_pipeline_button.font()
-        font2.setPointSize(10)
-        self.construct_pipeline_button.setFont(font2)
-        self.construct_pipeline_button.setFixedSize(200, 40)
-        self.construct_pipeline_button.clicked.connect(self.open_construct_pipeline_dialog)
-
-        button_layout.addWidget(self.construct_pipeline_button)
-
-        # Déplacer/ajouter le bouton Settings à côté, même hauteur
-        self.settings_button = QPushButton("Settings", self)
-        self.settings_button.setCheckable(True)
-        f3 = self.settings_button.font()
-        f3.setPointSize(10)
-        self.settings_button.setFont(f3)
-        self.settings_button.setFixedSize(200, 40)
-        from Packages.ui.dialogs.option_dialog import OptionDialog
-        def open_settings():
-            self.settings_button.setChecked(True)
-            dlg = OptionDialog(self)
-            dlg.finished.connect(lambda _: self.settings_button.setChecked(False))
-            dlg.exec_()
-        self.settings_button.clicked.connect(open_settings)
-        button_layout.addWidget(self.settings_button)
-
-        # Ajouter des marges pour un meilleur alignement
-        button_layout.setContentsMargins(10, 0, 0, 20)  # Gauche, Haut, Droite, Bas
-
-        # Ajouter un espace entre les boutons pour les séparer un peu
-        button_layout.addSpacing(10)
-
-        # Aligner les boutons en bas à gauche de la fenêtre
-        button_layout.addStretch()
-
-        # Créer le bouton Refresh tout à droite avec icône et texte
-        from Packages.utils.constants.project_pipezer_data import ICONS_PATH
-        self.refresh_button = QPushButton("Refresh", self)
-        self.refresh_button.setIcon(QIcon(os.path.join(ICONS_PATH, 'refresh_icon.png')))
-        self.refresh_button.setIconSize(QSize(24, 24))
-        self.refresh_button.setFixedSize(120, 40)
-        self.refresh_button.setToolTip("Rafraîchir la vue")
-        self.refresh_button.clicked.connect(self.refresh_view)
-        button_layout.addWidget(self.refresh_button)
+    def setup_standalone_content(self):
+        """Configure le contenu spécifique à la version standalone"""
+        # Initialiser le répertoire courant
+        self.current_directory = os.getcwd()
         
-        # Ajouter une marge à droite du bouton refresh
-        button_layout.addSpacing(20)
-
-        # Ajouter le layout des boutons au layout principal
-        self._browser_main_layout.addLayout(button_layout)
-
-    def open_construct_pipeline_dialog(self):
-        from Packages.ui.dialogs.construct_pipeline_dialog import ConstructPipelineDialog
-        self.construct_pipeline_button.setChecked(True)
-        dlg = ConstructPipelineDialog(self)
-        dlg.finished.connect(lambda: self.construct_pipeline_button.setChecked(False))
-        dlg.exec_()
-
-    def open_create_asset_dialog(self):
-        self.create_asset_button.setChecked(True)
-        self.create_asset_dialog = CreateAssetDialogStandalone(self)
-        self.create_asset_dialog.finished.connect(lambda: self.create_asset_button.setChecked(False))
-        self.create_asset_dialog.exec_()
-
-    def open_create_shot_dialog(self):
-        print("Ouverture de la fenêtre Create Shot")
-        self.create_shot_button.setChecked(True)
-        try:
-            self.create_shot_dialog = CreateShotDialog(self)
-            self.create_shot_dialog.finished.connect(lambda: self.create_shot_button.setChecked(False))
-            self.create_shot_dialog.exec_()
-        except Exception as e:
-            print(f"Erreur lors de l'ouverture de la fenêtre Create Shot : {e}")
-
-    def create_connections(self):
-        super().create_connections()
-        self._open_file_widget_browser.open_file_button.clicked.connect(self.open_file_in_app)
-        self._open_file_widget_recent.open_file_button.clicked.connect(self.open_file_in_app)
-        self._open_file_widget_search_file.open_file_button.clicked.connect(self.open_file_in_app)
-
-    def on_browser_tab_active(self):
-        super().on_browser_tab_active()
-        self.status_bar.update(self.current_directory)
-        print(f'current dir : {self.current_directory}')
-
-    def on_recent_tab_active(self):
-        super().on_recent_tab_active()
-        self._open_file_widget_recent.update_buttons(None)
-        recent_files = json_funcs.get_recent_files()
-        self.recent_file_table.update_file_items(recent_files)
-
-    def refresh_view(self):
-        """
-        Rafraîchit la vue actuelle en rechargeant les données.
-        """
-        print("Rafraîchissement de la vue...")
-        # Rafraîchir selon l'onglet actif
-        active_tab = self._get_active_tab_text()
+        # Charger le nom d'utilisateur
+        from Packages.ui.base_main_window import get_username
+        username = get_username()
+        self.set_username(username)
         
-        if active_tab == 'Browser':
-            # Rafraîchir le browser
-            self.on_radio_button_clicked()
-        elif active_tab == 'Recent':
-            # Rafraîchir les fichiers récents
-            self.on_recent_tab_active()
-        elif active_tab == 'Search File':
-            # Rafraîchir la recherche si nécessaire
-            pass
+        # Intégrer le contenu existant dans les pages
+        self.setup_browser_content()
+        self.setup_recent_content()
+        self.setup_search_content()
+        self.setup_asset_content()
+        self.setup_shot_content()
+        self.setup_settings_content()
+        self.setup_crash_content()
+        self.setup_notifications_content()
         
-        print("Vue rafraîchie !")
-
-    def open_file_in_app(self):
-
-        if self._get_active_tab_text() == 'Browser':
-            self._open_file_widget_browser.open_file_in_app(self.status_bar.get_text())
-
-        elif self._get_active_tab_text() == 'Recent':
-            self._open_file_widget_recent.open_file_in_app(self.status_bar.get_text())
-
-        elif self._get_active_tab_text() == 'Anim Filter':
-            self._open_file_widget_filtered.open_file_in_app(self.status_bar.get_text())
-
-    def _on_file_item_clicked(self, item):
-        super()._on_file_item_clicked(item)
-
-        file_path = item.data(32)
-
-        if self._get_active_tab_text() == 'Browser':
-            self._open_file_widget_browser.update_buttons(file_path)
-
-        elif self._get_active_tab_text() == 'Recent':
-            self._open_file_widget_recent.update_buttons(file_path)
-
-        elif self._get_active_tab_text() == 'Anim Filter':
-            self._open_file_widget_filtered.update_buttons(file_path)
-
+        # Connecter les signaux
+        self.connect_signals()
+        
+        # Configurer le mode développeur après que tout le contenu soit créé
+        self.configure_dev_mode()
+        
+    def setup_browser_content(self):
+        """Configure le contenu de la page Browser"""
+        # Utiliser le ContentMigrator pour créer le contenu du browser
+        self.browser_content = ContentMigrator.create_browser_content(self, self.current_directory)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.browser_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.browser_content)
+        
+    def setup_recent_content(self):
+        """Configure le contenu de la page Recent"""
+        # Utiliser le ContentMigrator pour créer le contenu des fichiers récents
+        self.recent_content = ContentMigrator.create_recent_content(self)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.recent_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.recent_content)
+        
+    def setup_search_content(self):
+        """Configure le contenu de la page Search"""
+        # Utiliser le ContentMigrator pour créer le contenu de recherche
+        self.search_content = ContentMigrator.create_search_content(self)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.search_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.search_content)
+        
+    def setup_asset_content(self):
+        """Configure le contenu de la page Create Asset"""
+        # Utiliser le ContentMigrator pour créer le contenu Create Asset
+        self.asset_content = ContentMigrator.create_asset_content(self)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.asset_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.asset_content)
+        
+    def setup_shot_content(self):
+        """Configure le contenu de la page Create Shot"""
+        # Utiliser le ContentMigrator pour créer le contenu Create Shot
+        self.shot_content = ContentMigrator.create_shot_content(self)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.shot_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.shot_content)
+        
+    def setup_settings_content(self):
+        """Configure le contenu de la page Settings"""
+        # Intégrer le widget de paramètres moderne
+        layout = QVBoxLayout(self.settings_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.settings_widget = ModernSettingsWidget(self)
+        layout.addWidget(self.settings_widget)
+        
+        # Synchroniser le thème
+        self.settings_widget.set_theme(self.current_theme)
+        
+    def setup_crash_content(self):
+        """Configure le contenu de la page Crash"""
+        # Utiliser le ContentMigrator pour créer le contenu Crash
+        self.crash_content = ContentMigrator.create_crash_content(self)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.crash_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.crash_content)
+        
+    def setup_notifications_content(self):
+        """Configure le contenu de la page Notifications"""
+        from Packages.ui.notifications_widget import NotificationsWidget
+        
+        # Créer le widget de notifications
+        self.notifications_widget = NotificationsWidget(self)
+        
+        # Ajouter au layout de la page
+        layout = QVBoxLayout(self.notifications_page)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self.notifications_widget)
+        
+    def connect_signals(self):
+        """Connecte les signaux"""
+        # Connecter le signal de changement de paramètres
+        if hasattr(self, 'settings_widget'):
+            self.settings_widget.settings_changed.connect(self.on_settings_changed)
+            
+        # Connecter les boutons du header
+        if hasattr(self, 'refresh_button'):
+            self.refresh_button.clicked.connect(self.refresh_current_content)
+            
+        # Connecter le signal de navigation du browser
+        self.browser_navigation_requested.connect(self.on_browser_navigation_requested)
+            
+    def on_browser_navigation_requested(self, target_path):
+        """Appelé quand un bouton de raccourci demande une navigation"""
+        if hasattr(self, 'browser_content') and hasattr(self.browser_content, 'update_navigation'):
+            self.browser_content.update_navigation(target_path)
         else:
-            return
-
-    def _add_dir(self, item):
-        super()._add_dir(item)
-        self._open_file_widget_browser.update_buttons(self.status_bar.get_text())
+            print(f"Fonction update_navigation non trouvée dans browser_content")
+            
+    def on_settings_changed(self, settings):
+        """Appelé quand les paramètres changent"""
+        # Mettre à jour le thème si nécessaire
+        if 'theme' in settings:
+            self.set_theme(settings['theme'])
+            
+        # Mettre à jour le nom d'utilisateur si nécessaire
+        if 'username' in settings and settings['username']:
+            self.set_username(settings['username'])
+            
+    def refresh_current_content(self):
+        """Rafraîchit le contenu de la page actuelle"""
+        current_index = self.stacked_widget.currentIndex()
+        
+        if current_index == 0:  # Browser
+            if hasattr(self, 'browser_content') and hasattr(self.browser_content, 'current_directory'):
+                # Rafraîchir l'affichage des fichiers (le filtrage est géré dans le ContentMigrator)
+                if hasattr(self.browser_content, 'browser_file_table'):
+                    self.browser_content.browser_file_table.setRowCount(0)
+                    # Le filtrage sera géré par la fonction update_filtered_file_table
+        elif current_index == 1:  # Recent
+            if hasattr(self, 'recent_content') and hasattr(self.recent_content, 'open_file_widget_recent'):
+                self.recent_content.open_file_widget_recent.refresh()
+        elif current_index == 2:  # Search
+            if hasattr(self, 'search_content') and hasattr(self.search_content, 'open_file_widget_search_file'):
+                self.search_content.open_file_widget_search_file.refresh()
+        elif current_index == 3:  # Asset
+            if hasattr(self, 'asset_content') and hasattr(self.asset_content, 'create_asset_dialog'):
+                # Rafraîchir le dialog Create Asset si nécessaire
+                pass
+        elif current_index == 4:  # Shot
+            if hasattr(self, 'shot_content') and hasattr(self.shot_content, 'create_shot_dialog'):
+                # Rafraîchir le dialog Create Shot si nécessaire
+                pass
+        elif current_index == 5:  # Settings
+            if hasattr(self, 'settings_widget'):
+                # Rafraîchir les paramètres si nécessaire
+                pass
+        elif current_index == 6:  # Crash
+            # Pas de rafraîchissement nécessaire pour la page Crash
+            pass
+        elif current_index == 7:  # Notifications
+            if hasattr(self, 'notifications_widget'):
+                # Rafraîchir les notifications
+                self.notifications_widget.load_notifications()
 
     def add_dev_mode(self):
+        """Ajoute le mode développeur"""
+        # Cette méthode est appelée avant que le contenu soit créé
+        # On va la déplacer après la création du contenu
+        pass
 
+    def configure_dev_mode(self):
+        """Configure le mode développeur après création du contenu"""
         if json_funcs.get_dev_mode_state():
-            self._open_file_widget_browser.prefs_button.show()
-
+            # Afficher les boutons de préférences dans les widgets OpenFileWidget
+            if hasattr(self, 'browser_content') and hasattr(self.browser_content, 'open_file_widget_browser'):
+                self.browser_content.open_file_widget_browser.prefs_button.show()
+            if hasattr(self, 'recent_content') and hasattr(self.recent_content, 'open_file_widget_recent'):
+                self.recent_content.open_file_widget_recent.prefs_button.show()
+            if hasattr(self, 'search_content') and hasattr(self.search_content, 'open_file_widget_search_file'):
+                self.search_content.open_file_widget_search_file.prefs_button.show()
         else:
-            self._open_file_widget_browser.prefs_button.hide()
+            # Masquer les boutons de préférences
+            if hasattr(self, 'browser_content') and hasattr(self.browser_content, 'open_file_widget_browser'):
+                self.browser_content.open_file_widget_browser.prefs_button.hide()
+            if hasattr(self, 'recent_content') and hasattr(self.recent_content, 'open_file_widget_recent'):
+                self.recent_content.open_file_widget_recent.prefs_button.hide()
+            if hasattr(self, 'search_content') and hasattr(self.search_content, 'open_file_widget_search_file'):
+                self.search_content.open_file_widget_search_file.prefs_button.hide()
 
-    def get_selected_file_path(self, item):
-        """
-        Récupère le chemin du fichier sélectionné à partir de l'élément sélectionné dans la table de fichiers.
-        Args:
-            item (QTableWidgetItem): L'élément sélectionné dans la table.
-        Returns:
-            str: Le chemin du fichier sélectionné.
-        """
-        # Détermine quelle table est active et utilise le bon index pour récupérer le chemin du fichier
-        active_tab = self._get_active_tab_text()
-        print(f"Active Tab: {active_tab}")  # Ligne de débogage pour voir le nom de l'onglet actif
-
-        if active_tab == 'Browser':
-            table = self.browser_file_table
-        elif active_tab == 'Recent':
-            table = self.recent_file_table
-        elif active_tab == 'Search File':
-            table = self.search_file_table
-        else:
-            print("Tab non pris en charge.")
-            return None
-
-        # Assurez-vous que l'élément est valide et qu'il y a suffisamment d'éléments sélectionnés
-        if item and table:
-            row = table.row(item)
-            # Assurez-vous que la colonne contenant le chemin du fichier est correcte (ici on suppose que c'est la première colonne)
-            file_path_item = table.item(row, 0)  # Remplacez 0 par l'index correct de la colonne du chemin du fichier
-            if file_path_item:
-                return file_path_item.text()
-
-        print("Aucun fichier sélectionné.")
-        return None
-
+    def refresh_interface_texts(self):
+        """Rafraîchit tous les textes de l'interface selon la langue actuelle"""
+        try:
+            # Cette méthode peut être étendue pour traduire tous les textes de l'interface
+            # Pour l'instant, les textes principaux sont en dur (Create Asset, Create Shot, etc.)
+            # Vous pouvez ajouter ici la traduction de tous les éléments si nécessaire
+            
+            # Forcer le rafraîchissement de l'affichage
+            self.update()
+        except Exception as e:
+            print(f"Erreur lors du rafraîchissement de l'interface: {e}")

@@ -15,6 +15,9 @@ EXTS = {
     ".kra": "krita",
     ".hip": "houdini",
     ".hipnc": "houdini",
+    ".hiplc": "houdini",
+    ".hda": "houdini",
+    ".hdanc": "houdini",
     ".ma": "maya",
     ".mb": "maya",
     ".nk": "nuke",
@@ -27,11 +30,33 @@ EXTS = {
     ".spp": "substance_painter",
     ".sbs": "substance_designer",
     ".sbsar": "substance_designer",
+    ".mud": "mudbox",
+    ".vdb": "embergen",
     ".png": "it",
     ".exr": "it",
     ".tex": "it",
     ".usd": "usdview",
     ".usda": "usdview"
+}
+
+# Mapping des logiciels vers leurs icônes spécifiques
+ICON_MAPPING = {
+    "substance_painter": "substance_painter_icon.ico",
+    "substance_designer": "substance_designer_icon.ico",
+    "blender": "blender_icon.ico",
+    "photoshop": "photoshop_icon.ico",
+    "resolve": "DaVinci_Resolve_Studio.png",
+    "unreal": "unreal_icon.ico",
+    "zbrush": "zbrush_bw_icon.ico",
+    "krita": "krita_seeklogo.png",
+    "mudbox": "autodesk-mudbox.png",
+    "embergen": "673677416f5ca83f2530cc7d_embergen-icon.png",
+    "maya": "maya_icon.ico",
+    "houdini": "houdini_icon.ico",
+    "nuke": "nuke_icon.ico",
+    "fbxreview": "fbxreview_icon.ico",
+    "it": "it_icon.ico",
+    "usdview": "usdview_icon.ico"
 }
 
 class OpenFileWidget(QWidget):
@@ -41,6 +66,7 @@ class OpenFileWidget(QWidget):
         
         self.application = None
         self.prefs_directory = None
+        self.current_file = None
         self._init_ui()
         self.update_buttons(file_directory)
         
@@ -71,6 +97,7 @@ class OpenFileWidget(QWidget):
         self._main_layout.addWidget(self.open_file_button)
 
         self.prefs_button.clicked.connect(self.set_pref)
+        self.open_file_button.clicked.connect(self.on_open_file_clicked)
         
         
     def set_pref(self):
@@ -115,7 +142,11 @@ class OpenFileWidget(QWidget):
     def set_icon(self, icon_name: str):
         
         if icon_name:
-            icon_app_name = f'{icon_name}_icon.ico'
+            # Utiliser le mapping personnalisé si disponible, sinon format par défaut
+            if icon_name in ICON_MAPPING:
+                icon_app_name = ICON_MAPPING[icon_name]
+            else:
+                icon_app_name = f'{icon_name}_icon.ico'
             icon_pref_name = 'folder_icon.ico'
         else:
             icon_app_name = 'none.ico'
@@ -140,6 +171,9 @@ class OpenFileWidget(QWidget):
     
     def update_buttons(self, file_directory: str):
         
+        # Stocker le fichier courant
+        self.current_file = file_directory
+        
         try:
             extension = os.path.splitext(file_directory)[-1]
             if extension:
@@ -150,6 +184,20 @@ class OpenFileWidget(QWidget):
             self.application = None
         
         self.set_display(self.application)
+    
+    def on_open_file_clicked(self):
+        """Ouvre le fichier courant avec l'application associée"""
+        if self.current_file and os.path.exists(self.current_file):
+            try:
+                self.open_file_in_app(self.current_file)
+            except Exception as e:
+                print(f"Erreur lors de l'ouverture du fichier: {e}")
+                from PySide2.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    "Erreur d'ouverture",
+                    f"Impossible d'ouvrir le fichier.\nAssurez-vous que l'application {self.application} est correctement configurée dans les paramètres.\n\nErreur: {e}"
+                )
     
     def open_file_in_app(self, directory: str):
         self.get_pref(self.application)
