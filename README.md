@@ -2,7 +2,7 @@
 
 PipeZer provides a comprehensive solution for managing 3D animation and VFX pipelines, offering intuitive tools for asset creation, shot management, and project navigation.
 
-![PipeZer Interface](./screenshots/pipezer-interface.png)
+![PipeZer Interface](./screenshot.png)
 
 - **Asset Creation**: Create and organize 3D assets with automatic folder structure
 - **Shot Management**: Generate shot folders with sequence organization
